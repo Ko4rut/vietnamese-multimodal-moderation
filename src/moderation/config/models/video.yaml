@@ -1,5 +1,0 @@
-model:
-  name: null
-  backend: custom
-  task: temporal_content_moderation
-  status: not_configured
