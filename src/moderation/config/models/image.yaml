@@ -1,0 +1,5 @@
+model:
+  name: null
+  backend: transformers
+  task: multilabel_classification
+  status: not_configured
