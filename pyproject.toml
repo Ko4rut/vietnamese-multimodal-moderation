@@ -12,6 +12,7 @@ dependencies = ["PyYAML>=6.0,<7"]
 
 [project.optional-dependencies]
 dev = ["pytest>=8,<10", "ruff>=0.8,<1"]
+data = ["datasets>=3.0"]
 
 [project.scripts]
 vtc = "vietnamese_topic_classification.__main__:main"
