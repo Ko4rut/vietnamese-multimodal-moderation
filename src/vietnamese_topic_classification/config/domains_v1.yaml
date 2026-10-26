@@ -1,0 +1,38 @@
+version: domains_v1
+task: single_label_multiclass
+num_classes: 25
+dataset:
+  id: VTSNLP/vietnamese_curated_dataset
+  revision: b81fcce58945970117a1b56d50ec81be2628a5c3
+  split: train
+  id_column: id
+  text_column: text
+  label_column: domain
+  label_provenance: automatically_assigned_source_labels
+  license_status: unverified
+domains:
+  - Arts_and_Entertainment
+  - Autos_and_Vehicles
+  - Beauty_and_Fitness
+  - Books_and_Literature
+  - Business_and_Industrial
+  - Computers_and_Electronics
+  - Finance
+  - Food_and_Drink
+  - Games
+  - Health
+  - Hobbies_and_Leisure
+  - Home_and_Garden
+  - Internet_and_Telecom
+  - Jobs_and_Education
+  - Law_and_Government
+  - News
+  - Online_Communities
+  - People_and_Society
+  - Pets_and_Animals
+  - Real_Estate
+  - Science
+  - Sensitive_Subjects
+  - Shopping
+  - Sports
+  - Travel_and_Transportation

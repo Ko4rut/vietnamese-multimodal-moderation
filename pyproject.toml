@@ -3,28 +3,25 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "vietnamese-multimodal-moderation"
+name = "vietnamese-topic-classification"
 version = "0.1.0"
-description = "Vietnamese multimodal content moderation research scaffold"
+description = "Single-label Vietnamese text topic classification across 25 VTSNLP domains"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = ["PyYAML>=6.0,<7"]
 
 [project.optional-dependencies]
 dev = ["pytest>=8,<10", "ruff>=0.8,<1"]
-text = ["torch>=2.2", "transformers>=4.40"]
-image = ["torch>=2.2", "transformers>=4.40", "pillow>=10"]
-video = ["opencv-python-headless>=4.9"]
-api = ["fastapi>=0.110", "uvicorn>=0.27"]
 
 [project.scripts]
-moderation = "moderation.__main__:main"
+vtc = "vietnamese_topic_classification.__main__:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+include = ["vietnamese_topic_classification*"]
 
 [tool.setuptools.package-data]
-moderation = ["config/**/*.yaml", "config/*.yaml"]
+vietnamese_topic_classification = ["config/*.yaml"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -32,3 +29,6 @@ testpaths = ["tests"]
 [tool.ruff]
 target-version = "py310"
 line-length = 100
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I"]
