@@ -1,5 +1,0 @@
-experiment:
-  seed: 42
-  batch_size: 16
-  epochs: 3
-  note: illustrative only

@@ -1,20 +1,27 @@
 name: Python CI
+
 on:
   push:
     branches: [main]
   pull_request:
     branches: [main]
+
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11"]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
-      - name: Install project
+          python-version: ${{ matrix.python-version }}
+      - name: Install package and test dependencies
         run: python -m pip install -e ".[dev]"
       - name: Lint
         run: ruff check src tests
-      - name: Test
+      - name: Run unit tests (offline)
         run: pytest -q
+      - name: Check installed package CLI
+        run: python -m vietnamese_topic_classification --list-domains

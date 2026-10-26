@@ -1,4 +1,0 @@
-experiment:
-  seed: 42
-  strategy: late_fusion
-  note: not implemented
