@@ -19,13 +19,13 @@
 src/vietnamese_topic_classification/
   __main__.py                # Package CLI
   config/domains_v1.yaml     # Task, source revision, 25 labels
-  config/settings.py        # Optional VTC_DATA_ROOT environment variable
-  data/                     # Reserved, no pipeline yet
+  config/settings.py        # DataLakeConfig and DATA_LAKE_ROOT configuration
+  data/bronze/              # Bronze ingestor, reader and exceptions
   training/                 # Reserved
   evaluation/               # Reserved
 tests/test_package.py       # Offline packaging and config tests
 .github/workflows/ci.yml    # Lint, tests and installed-package smoke test
-scripts/                    # Future CLI pipelines, not yet implemented
+scripts/                    # Bronze ingestion CLI and related tooling
 docs/                       # Current architecture/plan plus legacy references
 ```
 
@@ -41,7 +41,7 @@ python -m vietnamese_topic_classification --list-domains
 vtc --version
 ```
 
-The CLI currently only displays metadata; it **does not ingest, preprocess, split, or train**.
+The `vtc` CLI currently only displays metadata; ingestion runs through `scripts/01_ingest_bronze.py`, while `python -m vietnamese_topic_classification.data.main` validates/reads an existing Bronze snapshot.
 
 ## Hybrid workflow: VS Code → GitHub → Colab → Google Drive
 
@@ -49,7 +49,7 @@ The CLI currently only displays metadata; it **does not ingest, preprocess, spli
 2. Push to this GitHub repository. The repository is private, so Colab cloning requires GitHub authentication.
 3. In Colab, clone and install the package (`python -m pip install -e ".[dev]"`).
 4. Mount the **Google account containing the VTSNLP project**; verify the 50K Bronze file before running future pipeline scripts.
-5. Set `VTC_DATA_ROOT` to the verified project folder when a pipeline entry point needs it (see `.env.example`).
+5. Copy `.env.example` to `.env` and set `DATA_LAKE_ROOT` to the verified local/mounted Data Lake folder. The `DataLakeConfig` factory loads `.env` from the working directory (explicit OS environment variables take precedence).
 6. Store output data and reports on Google Drive, not in GitHub.
 
 The existing Drive folder may still be named `vietnamese-multilabel-topic-classification`. This historical folder name does not change the current single-label task. Avoid renaming it before updating notebook paths.
@@ -61,6 +61,6 @@ The existing Drive folder may still be named `vietnamese-multilabel-topic-classi
 - **Gold:** reproducible split datasets and label mappings; protect against duplicate/near-duplicate train–test leakage.
 - **Training:** model-specific tokenization/padding for Transformers; TF-IDF baseline needs no padding.
 
-The earlier 3K balanced Silver candidate file and multi-label annotation template are legacy exploration artifacts, **not** the intended 50K single-label baseline. No new scripts or data transformations are shipped in this change.
+The earlier 3K balanced Silver candidate file and multi-label annotation template are legacy exploration artifacts, **not** the intended 50K single-label baseline. Silver and Gold transformations are not implemented yet.
 
 See [architecture](docs/ARCHITECTURE.md) and [implementation plan](docs/IMPLEMENTATION_PLAN.md).
