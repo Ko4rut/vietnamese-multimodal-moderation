@@ -8,7 +8,7 @@ import pytest
 
 from vietnamese_topic_classification import __version__
 from vietnamese_topic_classification.config import get_domain_labels, load_domain_config
-from vietnamese_topic_classification.config.settings import get_settings
+from vietnamese_topic_classification.config.settings import DataLakeConfig
 
 
 def test_domain_config_matches_current_task() -> None:
@@ -30,11 +30,43 @@ def test_config_loads_from_installed_package() -> None:
     assert labels[-1] == "Travel_and_Transportation"
 
 
-def test_optional_data_root(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.delenv("VTC_DATA_ROOT", raising=False)
-    assert get_settings().data_root is None
-    monkeypatch.setenv("VTC_DATA_ROOT", "/tmp/colab-data")
-    assert get_settings().data_root == Path("/tmp/colab-data")
+def test_datalake_config_from_environment(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("DATA_LAKE_ROOT", str(tmp_path))
+    assert DataLakeConfig.from_env().root == tmp_path
+
+
+def test_datalake_config_from_dotenv(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.delenv("DATA_LAKE_ROOT", raising=False)
+    (tmp_path / ".env").write_text(f"DATA_LAKE_ROOT={tmp_path}\n", encoding="utf-8")
+
+    assert DataLakeConfig.from_env().root == tmp_path
+    monkeypatch.delenv("DATA_LAKE_ROOT", raising=False)
+
+
+def test_environment_overrides_dotenv(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / ".env").write_text("DATA_LAKE_ROOT=/missing-folder\n", encoding="utf-8")
+    monkeypatch.setenv("DATA_LAKE_ROOT", str(tmp_path))
+
+    assert DataLakeConfig.from_env().root == tmp_path
+
+
+def test_datalake_config_requires_variable(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.delenv("DATA_LAKE_ROOT", raising=False)
+    with pytest.raises(ValueError, match="DATA_LAKE_ROOT"):
+        DataLakeConfig.from_env()
+
+
+def test_datalake_config_requires_existing_directory(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("DATA_LAKE_ROOT", str(tmp_path / "does-not-exist"))
+    with pytest.raises(FileNotFoundError, match="Data Lake directory"):
+        DataLakeConfig.from_env()
 
 
 def test_cli_lists_all_domains() -> None:

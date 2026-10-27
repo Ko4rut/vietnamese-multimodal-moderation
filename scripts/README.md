@@ -23,3 +23,9 @@ and refuses to overwrite an existing snapshot.
 
 The old 50K Bronze file uses a different legacy naming scheme; this run
 creates a new snapshot rather than modifying the old one.
+
+Python package layout:
+- `vietnamese_topic_classification.data.bronze.ingestor` provides `BronzeIngestor`.
+- `vietnamese_topic_classification.data.bronze.reader` provides `BronzeReader`.
+- `vietnamese_topic_classification.data.bronze.exceptions` provides Bronze-specific exceptions.
+- Public imports such as `from vietnamese_topic_classification.data.bronze import BronzeIngestor, BronzeReader` are supported.
