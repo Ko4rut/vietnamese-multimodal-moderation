@@ -8,7 +8,7 @@ import re
 from pathlib import Path
 from typing import Any, Iterator
 
-from .exceptions.bronze_exception import (
+from .exceptions import (
     BronzeException,
     BronzeFileNotFoundError,
     BronzeFormatError,

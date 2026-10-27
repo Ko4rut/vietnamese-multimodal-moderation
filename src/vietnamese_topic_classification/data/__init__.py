@@ -1,1 +1,1 @@
-"""Data-layer interfaces will be implemented in a later change."""
+"""Data Lake pipelines, organized by processing layer (Bronze, Silver, Gold)."""

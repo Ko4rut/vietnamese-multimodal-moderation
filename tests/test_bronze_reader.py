@@ -5,8 +5,8 @@ import json
 
 import pytest
 
-from vietnamese_topic_classification.data.bronze_reader import BronzeReader
-from vietnamese_topic_classification.data.exceptions.bronze_exception import (
+from vietnamese_topic_classification.data.bronze import BronzeReader
+from vietnamese_topic_classification.data.bronze.exceptions import (
     BronzeException,
     BronzeFileNotFoundError,
     BronzeFormatError,
