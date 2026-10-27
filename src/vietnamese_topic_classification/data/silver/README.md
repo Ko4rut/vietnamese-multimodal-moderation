@@ -113,8 +113,8 @@ It performs these steps: fetch the Silver feature branch → install package →
 Google account → check manifest/Bronze and existing outputs → run the CLI → verify published
 counts and checksums. It **never runs** `01_ingest_bronze.py`.
 
-For private repository access, set a Colab **Secret** named `GITHUB_TOKEN` and allow notebook access
-to that secret. The notebook does not write credentials into repository files.
+The repository is **public**. The notebook clones the `feat/silver-pipeline-v1` branch
+directly over HTTPS, so **no GitHub token, login or Colab Secret is required**.
 
 ## 5. Output locations and rerun behavior
 

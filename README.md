@@ -47,7 +47,7 @@ The `vtc` CLI currently only displays metadata; ingestion runs through `scripts/
 ## Hybrid workflow: VS Code → GitHub → Colab → Google Drive
 
 1. Develop and commit Python source locally in VS Code. Keep raw datasets and credentials out of Git.
-2. Push to this GitHub repository. The repository is private, so Colab cloning requires GitHub authentication.
+2. Push to this **public** GitHub repository. Colab can clone it over HTTPS without a GitHub token.
 3. In Colab, clone and install the package (`python -m pip install -e ".[dev]"`).
 4. Mount the **Google account containing the VTSNLP project**; verify the 50K Bronze file before running future pipeline scripts.
 5. Copy `.env.example` to `.env` and set `DATA_LAKE_ROOT` to the verified local/mounted Data Lake folder. The `DataLakeConfig` factory loads `.env` from the working directory (explicit OS environment variables take precedence).
