@@ -104,6 +104,14 @@ python scripts/02_build_silver.py --manifest-name source_manifest_b81fcce589_see
 Set `DATA_LAKE_ROOT` to an existing *mounted or synchronized* Data Lake folder first. Alternatively
 pass `--data-lake-root /absolute/path/to/project`. The root is **not** a Drive URL.
 
+The project uses a **`src/` layout**: the import is
+`from vietnamese_topic_classification.data.bronze import BronzeReader`, **not** `import src`.
+The Colab notebook performs an editable pip install and then inserts
+`/content/project/src` into the running kernel's `sys.path`. This avoids an immediate
+`ModuleNotFoundError` when the kernel has not yet loaded editable-install paths.
+When invoking the Silver CLI as a child Python process, the notebook also sets
+`PYTHONPATH` to include that `src` directory.
+
 ### Google Colab (recommended for the existing Drive snapshot)
 
 Run the dedicated notebook:
