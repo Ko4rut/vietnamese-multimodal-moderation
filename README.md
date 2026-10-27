@@ -21,6 +21,7 @@ src/vietnamese_topic_classification/
   config/domains_v1.yaml     # Task, source revision, 25 labels
   config/settings.py        # DataLakeConfig and DATA_LAKE_ROOT configuration
   data/bronze/              # Bronze ingestor, reader and exceptions
+  data/silver/              # Silver V1 validation, normalization and publishing
   training/                 # Reserved
   evaluation/               # Reserved
 tests/test_package.py       # Offline packaging and config tests
@@ -46,7 +47,7 @@ The `vtc` CLI currently only displays metadata; ingestion runs through `scripts/
 ## Hybrid workflow: VS Code → GitHub → Colab → Google Drive
 
 1. Develop and commit Python source locally in VS Code. Keep raw datasets and credentials out of Git.
-2. Push to this GitHub repository. The repository is private, so Colab cloning requires GitHub authentication.
+2. Push to this **public** GitHub repository. Colab can clone it over HTTPS without a GitHub token.
 3. In Colab, clone and install the package (`python -m pip install -e ".[dev]"`).
 4. Mount the **Google account containing the VTSNLP project**; verify the 50K Bronze file before running future pipeline scripts.
 5. Copy `.env.example` to `.env` and set `DATA_LAKE_ROOT` to the verified local/mounted Data Lake folder. The `DataLakeConfig` factory loads `.env` from the working directory (explicit OS environment variables take precedence).
@@ -61,6 +62,6 @@ The existing Drive folder may still be named `vietnamese-multilabel-topic-classi
 - **Gold:** reproducible split datasets and label mappings; protect against duplicate/near-duplicate train–test leakage.
 - **Training:** model-specific tokenization/padding for Transformers; TF-IDF baseline needs no padding.
 
-The earlier 3K balanced Silver candidate file and multi-label annotation template are legacy exploration artifacts, **not** the intended 50K single-label baseline. Silver and Gold transformations are not implemented yet.
+The earlier 3K balanced Silver candidate file and multi-label annotation template are legacy exploration artifacts, **not** the intended 50K single-label baseline. Silver V1 is implemented on this feature branch; Gold transformations are not implemented yet.
 
-See [architecture](docs/ARCHITECTURE.md) and [implementation plan](docs/IMPLEMENTATION_PLAN.md).
+See [Silver V1 pipeline details](src/vietnamese_topic_classification/data/silver/README.md), [Colab Silver runner](notebooks/colab_silver_runner.ipynb), [architecture](docs/ARCHITECTURE.md) and [implementation plan](docs/IMPLEMENTATION_PLAN.md).
