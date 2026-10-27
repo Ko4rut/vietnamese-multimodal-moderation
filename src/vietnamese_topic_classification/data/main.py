@@ -17,6 +17,7 @@ def main() -> None:
 
     first = next(reader.iter_records())
     print("First record ID:", first.get("id"))
+    print("First record content: ", first.get("text"))
     print("First record domain:", first.get("domain"))
 
 
