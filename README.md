@@ -21,6 +21,7 @@ src/vietnamese_topic_classification/
   config/domains_v1.yaml     # Task, source revision, 25 labels
   config/settings.py        # DataLakeConfig and DATA_LAKE_ROOT configuration
   data/bronze/              # Bronze ingestor, reader and exceptions
+  data/silver/              # Silver V1 validation, normalization and publishing
   training/                 # Reserved
   evaluation/               # Reserved
 tests/test_package.py       # Offline packaging and config tests
@@ -61,6 +62,6 @@ The existing Drive folder may still be named `vietnamese-multilabel-topic-classi
 - **Gold:** reproducible split datasets and label mappings; protect against duplicate/near-duplicate train–test leakage.
 - **Training:** model-specific tokenization/padding for Transformers; TF-IDF baseline needs no padding.
 
-The earlier 3K balanced Silver candidate file and multi-label annotation template are legacy exploration artifacts, **not** the intended 50K single-label baseline. Silver and Gold transformations are not implemented yet.
+The earlier 3K balanced Silver candidate file and multi-label annotation template are legacy exploration artifacts, **not** the intended 50K single-label baseline. Silver V1 is implemented on this feature branch; Gold transformations are not implemented yet.
 
-See [architecture](docs/ARCHITECTURE.md) and [implementation plan](docs/IMPLEMENTATION_PLAN.md).
+See [Silver V1 pipeline details](src/vietnamese_topic_classification/data/silver/README.md), [Colab Silver runner](notebooks/colab_silver_runner.ipynb), [architecture](docs/ARCHITECTURE.md) and [implementation plan](docs/IMPLEMENTATION_PLAN.md).
