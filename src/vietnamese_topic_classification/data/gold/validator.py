@@ -8,13 +8,14 @@ from typing import Any
 from vietnamese_topic_classification.config import get_domain_labels
 
 from .exceptions import GoldValidationError
+from .model import GoldRecord
 
 
 class GoldValidator:
     def __init__(self) -> None:
         self.label_to_id = {name: index for index, name in enumerate(get_domain_labels())}
 
-    def convert(self, record: dict[str, Any], line_number: int) -> dict[str, Any]:
+    def convert(self, record: dict[str, Any], line_number: int) -> GoldRecord:
         if not isinstance(record, dict):
             raise GoldValidationError(f"Row {line_number}: expected JSON object")
         rid, text, domain = (record.get(key) for key in ("id", "text", "domain"))
@@ -42,10 +43,10 @@ class GoldValidator:
             "quality_flags": record["quality_flags"],
         }
 
-    def convert_all(self, source: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    def convert_all(self, source: list[dict[str, Any]]) -> list[GoldRecord]:
         ids: set[str] = set()
         hashes: set[str] = set()
-        rows: list[dict[str, Any]] = []
+        rows: list[GoldRecord] = []
         for index, raw in enumerate(source, start=1):
             row = self.convert(raw, index)
             normalized_id = row["id"].strip()

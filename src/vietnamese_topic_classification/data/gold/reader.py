@@ -6,12 +6,13 @@ import hashlib
 import json
 import re
 from pathlib import Path
-from typing import Any, Iterator
+from typing import Any, Iterator, cast
 
 from vietnamese_topic_classification.config import get_domain_labels
 from vietnamese_topic_classification.data.base_reader import BaseReader
 
 from .exceptions import GoldIntegrityError, GoldManifestError
+from .model import GoldManifest
 from .splitter import SPLITS
 
 
@@ -64,7 +65,7 @@ class GoldReader(BaseReader):
             raise GoldManifestError("Gold manifest split counts do not sum to total_rows")
         if len({path.name for path in paths.values()}) != len(paths):
             raise GoldManifestError("Gold files must have distinct filenames")
-        self.manifest = manifest
+        self.manifest: GoldManifest = cast(GoldManifest, manifest)
         self.data_paths = paths
 
     def verify(self) -> dict[str, Any]:

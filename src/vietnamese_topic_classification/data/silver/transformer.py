@@ -6,6 +6,8 @@ import re
 import unicodedata
 from typing import Any, Mapping
 
+from .model import SilverRecord
+
 
 class SilverTransformer:
     """Preserve semantic content and paragraphs; no correction or truncation."""
@@ -17,7 +19,7 @@ class SilverTransformer:
         normalized = re.sub(r"[^\S\n]+", " ", normalized)
         return normalized.strip()
 
-    def transform(self, record: Mapping[str, Any], source_snapshot: str) -> dict[str, Any]:
+    def transform(self, record: Mapping[str, Any], source_snapshot: str) -> SilverRecord:
         text = self.normalize_text(record["text"])
         return {
             "id": record["id"],

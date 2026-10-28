@@ -13,6 +13,11 @@ from typing import Any
 
 from vietnamese_topic_classification.data.bronze import BronzeReader
 from vietnamese_topic_classification.data.silver.exceptions import SilverPublicationError
+from vietnamese_topic_classification.data.silver.model import (
+    SilverPublishedReport,
+    SilverRejectedRecord,
+    SilverRunResult,
+)
 from vietnamese_topic_classification.data.silver.transformer import SilverTransformer
 from vietnamese_topic_classification.data.silver.validator import SilverValidator
 
@@ -64,7 +69,7 @@ class SilverPipeline:
         self.validator = validator if validator is not None else SilverValidator()
         self.transformer = transformer if transformer is not None else SilverTransformer()
 
-    def run(self) -> dict[str, Any]:
+    def run(self) -> SilverRunResult:
         """Verify source, write accepted/rejected JSONL and publish an audit report."""
         source_name = self.reader.data_path.stem
         suffix = source_name.removeprefix("vtsnlp_raw_sample_")
@@ -114,12 +119,12 @@ class SilverPipeline:
                     if reason is not None:
                         counts["rejected"] += 1
                         counts[f"reason:{reason}"] += 1
-                        _write_jsonl(rejected, {
+                        _write_jsonl(rejected, SilverRejectedRecord({
                             "source_snapshot": self.reader.data_path.name,
                             "source_line": line_number,
                             "reason": reason,
                             "record": record,
-                        })
+                        }))
                         continue
 
                     # Duplicates keep the first valid representative, in source order.
@@ -137,7 +142,7 @@ class SilverPipeline:
             if counts["input"] != verification["records"]:
                 raise SilverPublicationError("Input count changed after Bronze verification")
 
-            report: dict[str, Any] = {
+            report: SilverPublishedReport = {
                 "pipeline_version": SILVER_VERSION,
                 "source_snapshot": self.reader.data_path.name,
                 "source_manifest": self.reader.manifest_path.name,

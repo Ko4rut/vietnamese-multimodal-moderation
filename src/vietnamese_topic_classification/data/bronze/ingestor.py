@@ -20,6 +20,13 @@ from typing import Any, Iterator, Mapping
 
 from vietnamese_topic_classification.config import load_domain_config
 
+from .model import (
+    BronzeIngestResult,
+    BronzeIngestionReport,
+    BronzePublishedManifest,
+    BronzeRecord,
+)
+
 
 def _sha256_file(path: Path) -> str:
     digest = hashlib.sha256()
@@ -90,7 +97,7 @@ class BronzeIngestor:
         )
         return iter(stream)
 
-    def run(self) -> dict[str, Any]:
+    def run(self) -> BronzeIngestResult:
         root = Path(self.config.output_root).expanduser()
         suffix = (
             f"{self.revision[:10]}_seed{self.config.seed}"
@@ -121,7 +128,7 @@ class BronzeIngestor:
                 for row in islice(self._source_rows(), self.config.sample_size):
                     if not isinstance(row, Mapping):
                         raise TypeError(f"Source row {count} is not a mapping")
-                    record = {
+                    record: BronzeRecord = {
                         "id": row.get(self.source["id_column"]),
                         "text": row.get(self.source["text_column"]),
                         "domain": row.get(self.source["label_column"]),
@@ -143,7 +150,7 @@ class BronzeIngestor:
                 )
 
             created = datetime.now(timezone.utc).isoformat()
-            manifest = {
+            manifest: BronzePublishedManifest = {
                 "dataset": self.source["id"],
                 "source_url": f"https://huggingface.co/datasets/{self.source['id']}",
                 "revision": self.revision,
@@ -167,7 +174,7 @@ class BronzeIngestor:
                 "sha256": digest.hexdigest(),
                 "created_utc": created,
             }
-            report = {
+            report: BronzeIngestionReport = {
                 "sample_size": count,
                 "domain_counts": dict(sorted(domain_counts.items())),
                 "missing_field_counts": dict(sorted(missing_fields.items())),

@@ -9,11 +9,23 @@ from .exceptions import (
     SilverReportError,
 )
 from .pipeline import SilverPipeline
+from .model import (
+    SilverPublishedReport,
+    SilverQualityReport,
+    SilverRecord,
+    SilverRejectedRecord,
+    SilverRunResult,
+)
 from .reader import SilverReader
 from .transformer import SilverTransformer
 from .validator import SilverValidator, ValidationResult
 
 __all__ = [
+    "SilverRecord",
+    "SilverRejectedRecord",
+    "SilverQualityReport",
+    "SilverPublishedReport",
+    "SilverRunResult",
     "SilverException",
     "SilverFileNotFoundError",
     "SilverFormatError",

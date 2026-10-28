@@ -11,10 +11,11 @@ from __future__ import annotations
 import hashlib
 import random
 from collections import Counter, defaultdict
-from typing import Any
+from typing import cast
 
 from .config import GoldConfig
 from .exceptions import GoldLeakageError
+from .model import GoldCandidateAudit, GoldRecord, GoldSplitAudit
 
 SPLITS = ("train", "validation", "test")
 
@@ -37,7 +38,7 @@ class GoldSplitter:
     def __init__(self, config: GoldConfig | None = None) -> None:
         self.config = config or GoldConfig()
 
-    def groups(self, rows: list[dict[str, Any]]) -> tuple[list[int], dict[str, Any]]:
+    def groups(self, rows: list[GoldRecord]) -> tuple[list[int], GoldCandidateAudit]:
         """Union verified similar records; never split identified pairs across outputs."""
         size = len(rows)
         parent = list(range(size))
@@ -107,7 +108,7 @@ class GoldSplitter:
             "groups": len(set(result)),
         }
 
-    def split(self, rows: list[dict[str, Any]]) -> tuple[dict[str, list[int]], dict[str, Any]]:
+    def split(self, rows: list[GoldRecord]) -> tuple[dict[str, list[int]], GoldSplitAudit]:
         if not rows:
             raise ValueError("Cannot split an empty Silver snapshot")
         roots, audit = self.groups(rows)
@@ -164,4 +165,4 @@ class GoldSplitter:
             "Approximate stratification preserves discovered groups; candidate search "
             "may miss near duplicates. Review deviations and label quality before training."
         )
-        return allocated, audit
+        return allocated, cast(GoldSplitAudit, audit)

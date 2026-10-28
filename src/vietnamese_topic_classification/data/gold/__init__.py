@@ -10,11 +10,29 @@ from .exceptions import (
     GoldValidationError,
 )
 from .pipeline import GoldPipeline
+from .model import (
+    GoldCandidateAudit,
+    GoldManifest,
+    GoldPipelineResult,
+    GoldQualityReport,
+    GoldRecord,
+    GoldSource,
+    GoldSplitAudit,
+    GoldSplitFile,
+)
 from .reader import GoldReader
 from .splitter import GoldSplitter
 from .validator import GoldValidator
 
 __all__ = [
+    "GoldRecord",
+    "GoldManifest",
+    "GoldSource",
+    "GoldSplitFile",
+    "GoldCandidateAudit",
+    "GoldSplitAudit",
+    "GoldQualityReport",
+    "GoldPipelineResult",
     "GoldConfig",
     "GoldError",
     "GoldIntegrityError",

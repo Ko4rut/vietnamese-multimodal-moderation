@@ -15,6 +15,13 @@ from vietnamese_topic_classification.data.silver import SilverReader
 
 from .config import GoldConfig
 from .exceptions import GoldPublicationError, GoldValidationError
+from .model import (
+    GoldManifest,
+    GoldPipelineResult,
+    GoldQualityReport,
+    GoldSource,
+    GoldSplitFile,
+)
 from .splitter import SPLITS, GoldSplitter
 from .validator import GoldValidator
 
@@ -71,7 +78,7 @@ class GoldPipeline:
         self.config = config or GoldConfig()
         self.root = Path(output_root) if output_root is not None else reader.root
 
-    def run(self) -> dict[str, Any]:
+    def run(self) -> GoldPipelineResult:
         source = self.reader.verify()
         if source["records"] == 0:
             raise GoldValidationError("Silver has no accepted records; cannot build Gold")
@@ -105,7 +112,7 @@ class GoldPipeline:
             raise GoldValidationError("Silver record count changed after verification")
         indices, audit = GoldSplitter(self.config).split(rows)
         created = datetime.now(timezone.utc).isoformat()
-        source_metadata = {
+        source_metadata: GoldSource = {
             "silver_file": self.reader.data_path.name,
             "silver_quality_report": self.reader.report_path.name,
             "silver_sha256": source["sha256"],
@@ -113,7 +120,7 @@ class GoldPipeline:
 
         with tempfile.TemporaryDirectory(prefix="vtc_gold_") as temp:
             local = {name: Path(temp) / target.name for name, target in paths.items()}
-            files: dict[str, dict[str, Any]] = {}
+            files: dict[str, GoldSplitFile] = {}
             for split in SPLITS:
                 with local[split].open("w", encoding="utf-8", newline="\n") as handle:
                     for index in indices[split]:
@@ -127,7 +134,7 @@ class GoldPipeline:
             if sum(entry["rows"] for entry in files.values()) != len(rows):
                 raise GoldPublicationError("Gold outputs do not sum to Silver accepted rows")
 
-            report = {
+            report: GoldQualityReport = {
                 "pipeline_version": VERSION,
                 "source": source_metadata,
                 "input_rows": len(rows),
@@ -143,7 +150,7 @@ class GoldPipeline:
                 "limitations": audit["note"],
                 "created_utc": created,
             }
-            manifest = {
+            manifest: GoldManifest = {
                 "format_version": 1,
                 "pipeline_version": VERSION,
                 "source": source_metadata,

@@ -6,9 +6,11 @@ import hashlib
 import json
 import re
 from pathlib import Path
-from typing import Any, Iterator
+from typing import Any, Iterator, cast
 
 from vietnamese_topic_classification.data.base_reader import BaseReader
+
+from .model import SilverQualityReport
 
 from .exceptions import (
     SilverException,
@@ -61,7 +63,7 @@ class SilverReader(BaseReader):
         if type(report["accepted_rows"]) is not int or report["accepted_rows"] < 0:
             raise SilverReportError("Invalid accepted_rows in quality report")
 
-        self.report = report
+        self.report: SilverQualityReport = cast(SilverQualityReport, report)
         self.data_path = self.root / "02_silver" / file_name
         if not self.data_path.is_file():
             raise SilverFileNotFoundError(f"Silver snapshot not found: {self.data_path}")

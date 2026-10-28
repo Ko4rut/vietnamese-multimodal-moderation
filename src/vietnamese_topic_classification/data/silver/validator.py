@@ -2,16 +2,11 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import Any, Mapping
 
 from vietnamese_topic_classification.config import get_domain_labels
 
-
-@dataclass(frozen=True)
-class ValidationResult:
-    valid: bool
-    reason: str | None = None
+from .model import ValidationResult
 
 
 class SilverValidator:

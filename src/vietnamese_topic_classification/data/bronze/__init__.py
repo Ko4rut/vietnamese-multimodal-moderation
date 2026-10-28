@@ -9,8 +9,13 @@ from .exceptions import (
 )
 from .ingestor import BronzeConfig, BronzeIngestor
 from .reader import BronzeReader
+from .model import BronzeIngestResult, BronzeIngestionReport, BronzeManifest, BronzeRecord
 
 __all__ = [
+    "BronzeRecord",
+    "BronzeManifest",
+    "BronzeIngestionReport",
+    "BronzeIngestResult",
     "BronzeConfig",
     "BronzeIngestor",
     "BronzeReader",
