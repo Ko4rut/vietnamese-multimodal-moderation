@@ -156,3 +156,30 @@ Allow enough temporary disk space (especially with the 50K sample).
 - No manual label validation: VTSNLP domains are automatically assigned upstream, not verified ground truth.
 
 Source: `validator.py`, `transformer.py`, `pipeline.py`. Offline fixtures: `tests/test_silver.py`.
+
+
+## 7. Read an existing Silver snapshot
+
+Use `SilverReader` after the Silver pipeline has published its quality report.
+The reader resolves the accepted JSONL filename from `output_files.silver` in that report
+and checks `silver_sha256` and `accepted_rows` before the preview script reads rows.
+
+```bash
+python scripts/03_read_silver.py \
+  --data-lake-root /path/to/data-lake \
+  --report-name silver_quality_v1_b81fcce589_seed42_n50000.json \
+  --limit 3
+```
+
+Use the actual report filename in `05_reports/`. The command only verifies and previews
+the accepted Silver rows; it does not re-run Silver, read rejected records, or modify artifacts.
+For code usage:
+
+```python
+from vietnamese_topic_classification.data.silver import SilverReader
+
+reader = SilverReader(data_lake_root, report_name)
+reader.verify()
+for record in reader.iter_records():
+    ...  # Build downstream Gold/modeling inputs
+```

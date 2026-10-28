@@ -8,6 +8,8 @@ import re
 from pathlib import Path
 from typing import Any, Iterator
 
+from vietnamese_topic_classification.data.base_reader import BaseReader
+
 from .exceptions import (
     BronzeException,
     BronzeFileNotFoundError,
@@ -17,7 +19,7 @@ from .exceptions import (
 )
 
 
-class BronzeReader:
+class BronzeReader(BaseReader):
     """Read and verify one manifest-addressed Bronze snapshot without modifying it.
 
     drive_root is a mounted directory, not a Google Drive API credential.
