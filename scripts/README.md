@@ -29,3 +29,7 @@ Python package layout:
 - `vietnamese_topic_classification.data.bronze.reader` provides `BronzeReader`.
 - `vietnamese_topic_classification.data.bronze.exceptions` provides Bronze-specific exceptions.
 - Public imports such as `from vietnamese_topic_classification.data.bronze import BronzeIngestor, BronzeReader` are supported.
+
+## Silver EDA notebook
+
+Install `python -m pip install -e ".[dev,eda]"` (or `".[eda]"` without test tools). The `eda` extra includes JupyterLab, IPython, an IPython kernel, notebook format validation, Pandas, NumPy, Matplotlib, and scikit-learn. Run `python scripts/04_generate_silver_eda_notebook.py` to regenerate `notebooks/eda/01_silver_eda.ipynb`; `--check` verifies that it is up to date. The notebook uses `SilverReader` and generates multiple inline charts plus optional read-only Bronze comparison. It does not write outputs by default.

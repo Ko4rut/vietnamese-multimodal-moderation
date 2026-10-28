@@ -12,10 +12,9 @@ from pathlib import Path
 from typing import Any
 
 from vietnamese_topic_classification.data.bronze import BronzeReader
-
-from .exceptions import SilverPublicationError
-from .transformer import SilverTransformer
-from .validator import SilverValidator
+from vietnamese_topic_classification.data.silver.exceptions import SilverPublicationError
+from vietnamese_topic_classification.data.silver.transformer import SilverTransformer
+from vietnamese_topic_classification.data.silver.validator import SilverValidator
 
 
 SILVER_VERSION = "v1"

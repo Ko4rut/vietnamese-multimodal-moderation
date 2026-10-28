@@ -8,6 +8,8 @@ import re
 from pathlib import Path
 from typing import Any, Iterator
 
+from vietnamese_topic_classification.data.base_reader import BaseReader
+
 from .exceptions import (
     BronzeException,
     BronzeFileNotFoundError,
@@ -17,18 +19,18 @@ from .exceptions import (
 )
 
 
-class BronzeReader:
+class BronzeReader(BaseReader):
     """Read and verify one manifest-addressed Bronze snapshot without modifying it.
 
-    drive_root is a mounted directory, not a Google Drive API credential.
+    data_lake_root is a mounted directory, not a Google Drive API credential.
     """
 
-    def __init__(self, drive_root: Path, manifest_name: str) -> None:
-        self.root = Path(drive_root).expanduser()
-        if not manifest_name or Path(manifest_name).name != manifest_name or "\\" in manifest_name:
-            raise BronzeManifestError("manifest_name must be a file name, not a path")
+    def __init__(self, data_lake_root: Path, metadata_name: str) -> None:
+        if not self.is_safe_metadata_name(metadata_name):
+            raise BronzeManifestError("metadata_name must be a JSON filename, not a path")
+        super().__init__(data_lake_root, metadata_name)
+        self.manifest_path = self.root / "00_source_metadata" / self.metadata_name
 
-        self.manifest_path = self.root / "00_source_metadata" / manifest_name
         try:
             with self.manifest_path.open("r", encoding="utf-8") as handle:
                 manifest = json.load(handle)
