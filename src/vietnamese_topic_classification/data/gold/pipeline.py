@@ -9,8 +9,6 @@ import tempfile
 from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
-
 from vietnamese_topic_classification.data.silver import SilverReader
 
 from .config import GoldConfig
