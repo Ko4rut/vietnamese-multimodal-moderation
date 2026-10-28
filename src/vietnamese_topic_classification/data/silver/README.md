@@ -178,8 +178,24 @@ For code usage:
 ```python
 from vietnamese_topic_classification.data.silver import SilverReader
 
-reader = SilverReader(data_lake_root, report_name)
+reader = SilverReader(data_lake_root, metadata_name)
 reader.verify()
 for record in reader.iter_records():
     ...  # Build downstream Gold/modeling inputs
+```
+
+
+## Shared Reader interface
+
+`BronzeReader` and `SilverReader` both accept `(data_lake_root, metadata_name)`. Bronze resolves
+the name under `00_source_metadata/`, while Silver resolves it under `05_reports/`. This
+unifies the Python API without changing already-published snapshots.
+
+To run the shared read-only smoke check:
+
+```bash
+python -m vietnamese_topic_classification.data.main \
+  --layer silver \
+  --metadata-name silver_quality_v1_b81fcce589_seed42_buf10000_n50000.json \
+  --limit 3
 ```

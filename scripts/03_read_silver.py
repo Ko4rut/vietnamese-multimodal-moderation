@@ -19,7 +19,7 @@ def main() -> None:
         parser.error("--limit must be nonnegative")
 
     root = args.data_lake_root if args.data_lake_root is not None else DataLakeConfig.from_env().root
-    reader = SilverReader(data_lake_root=root, report_name=args.report_name)
+    reader = SilverReader(data_lake_root=root, metadata_name=args.report_name)
     result = reader.verify()
     print(json.dumps({"verification": result, "snapshot": reader.data_path.name}, ensure_ascii=False))
     for record in islice(reader.iter_records(), args.limit):

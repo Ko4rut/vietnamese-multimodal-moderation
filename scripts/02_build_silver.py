@@ -15,7 +15,7 @@ def main() -> None:
     parser.add_argument("--data-lake-root", type=Path, default=None, help="Overrides DATA_LAKE_ROOT")
     args = parser.parse_args()
     root = args.data_lake_root if args.data_lake_root is not None else DataLakeConfig.from_env().root
-    reader = BronzeReader(drive_root=root, manifest_name=args.manifest_name)
+    reader = BronzeReader(data_lake_root=root, metadata_name=args.manifest_name)
     result = SilverPipeline(reader).run()
     print(json.dumps(result, ensure_ascii=False, indent=2))
 

@@ -26,17 +26,12 @@ class SilverReader(BaseReader):
     This reader does not mutate data, normalize text or access Google Drive APIs.
     """
 
-    def __init__(self, data_lake_root: Path, report_name: str) -> None:
-        self.root = Path(data_lake_root).expanduser()
-        if (
-            not isinstance(report_name, str)
-            or not report_name.endswith(".json")
-            or Path(report_name).name != report_name
-            or "\\" in report_name
-        ):
-            raise SilverReportError("report_name must be a JSON filename, not a path")
+    def __init__(self, data_lake_root: Path, metadata_name: str) -> None:
+        if not self.is_safe_metadata_name(metadata_name):
+            raise SilverReportError("metadata_name must be a JSON filename, not a path")
+        super().__init__(data_lake_root, metadata_name)
+        self.report_path = self.root / "05_reports" / self.metadata_name
 
-        self.report_path = self.root / "05_reports" / report_name
         try:
             with self.report_path.open("r", encoding="utf-8") as handle:
                 report = json.load(handle)
