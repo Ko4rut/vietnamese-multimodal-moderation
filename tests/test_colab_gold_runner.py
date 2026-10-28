@@ -40,5 +40,8 @@ def test_gold_colab_runner_contract():
     ):
         assert expected in source
     assert "01_ingest_bronze.py" not in source
+    assert '"04_gold"' in source
+    assert 'GOLD_ALREADY_EXISTS' in source
+    assert '"03_gold"' not in source
     assert "02_build_silver.py" not in source
     assert 'pip", "install", "-q", "-e", "."' in source

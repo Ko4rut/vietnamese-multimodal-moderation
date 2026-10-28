@@ -47,7 +47,7 @@ split; transformer tokenization belongs to modeling.
 ## Output layout
 
     DATA_LAKE_ROOT/
-      03_gold/
+      04_gold/
         gold_train_v1_<source-config-id>.jsonl
         gold_validation_v1_<source-config-id>.jsonl
         gold_test_v1_<source-config-id>.jsonl

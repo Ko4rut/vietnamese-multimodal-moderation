@@ -11,7 +11,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from vietnamese_topic_classification.data.silver import SilverReader
 
-from .config import GoldConfig
+from .config import GOLD_DIR_NAME, GoldConfig
 from .exceptions import GoldPublicationError, GoldValidationError
 from .model import (
     GoldManifest,
@@ -93,12 +93,12 @@ class GoldPipeline:
         ).hexdigest()[:10]
         suffix = f"{source_sha256[:12]}_{config_hash}"
         paths = {
-            split: self.root / "03_gold" / f"gold_{split}_{VERSION}_{suffix}.jsonl"
+            split: self.root / GOLD_DIR_NAME / f"gold_{split}_{VERSION}_{suffix}.jsonl"
             for split in SPLITS
         }
         paths["report"] = self.root / "05_reports" / f"gold_quality_{VERSION}_{suffix}.json"
         paths["manifest"] = (
-            self.root / "03_gold" / "manifests" / f"gold_manifest_{VERSION}_{suffix}.json"
+            self.root / GOLD_DIR_NAME / "manifests" / f"gold_manifest_{VERSION}_{suffix}.json"
         )
         return paths
 

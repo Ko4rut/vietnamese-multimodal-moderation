@@ -11,6 +11,7 @@ from typing import Any, Iterator, cast
 from vietnamese_topic_classification.config import get_domain_labels
 from vietnamese_topic_classification.data.base_reader import BaseReader
 
+from .config import GOLD_DIR_NAME
 from .exceptions import GoldIntegrityError, GoldManifestError
 from .model import GoldManifest
 from .splitter import SPLITS
@@ -32,7 +33,7 @@ class GoldReader(BaseReader):
         if not self.is_safe_metadata_name(metadata_name):
             raise GoldManifestError("metadata_name must be a JSON filename, not a path")
         super().__init__(data_lake_root, metadata_name)
-        self.manifest_path = self.root / "03_gold" / "manifests" / metadata_name
+        self.manifest_path = self.root / GOLD_DIR_NAME / "manifests" / metadata_name
         try:
             manifest = json.loads(self.manifest_path.read_text(encoding="utf-8"))
         except (OSError, UnicodeError, json.JSONDecodeError) as exc:
@@ -58,7 +59,7 @@ class GoldReader(BaseReader):
                 r"[0-9a-f]{64}", entry["sha256"]
             ):
                 raise GoldManifestError(f"Invalid Gold checksum for {split}")
-            paths[split] = self.root / "03_gold" / entry["file_name"]
+            paths[split] = self.root / GOLD_DIR_NAME / entry["file_name"]
             if not paths[split].is_file():
                 raise GoldIntegrityError(f"Gold split missing: {paths[split]}")
         if sum(entries[name]["rows"] for name in SPLITS) != manifest["total_rows"]:
