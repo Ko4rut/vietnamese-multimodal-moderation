@@ -33,3 +33,22 @@ Python package layout:
 ## Silver EDA notebook
 
 Install `python -m pip install -e ".[dev,eda]"` (or `".[eda]"` without test tools). The `eda` extra includes JupyterLab, IPython, an IPython kernel, notebook format validation, Pandas, NumPy, Matplotlib, and scikit-learn. Run `python scripts/04_generate_silver_eda_notebook.py` to regenerate `notebooks/eda/01_silver_eda.ipynb`; `--check` verifies that it is up to date. The notebook uses `SilverReader` and generates multiple inline charts plus optional read-only Bronze comparison. It does not write outputs by default.
+
+
+## Gold V1 (new feature branch)
+
+After verifying an existing Silver snapshot, build immutable Gold train/validation/test:
+
+    python scripts/05_build_gold.py --report-name silver_quality_v1_b81fcce589_seed42_buf10000_n50000.json
+
+Requires DATA_LAKE_ROOT (mounted/synced local Data Lake), or pass --data-lake-root.
+Gold stores per-split checksums, source lineage, fixed 25-domain label mapping and
+a separate quality report. See src/vietnamese_topic_classification/data/gold/README.md.
+
+## Colab Gold runner
+
+Use `notebooks/colab_gold_runner.ipynb` from `feat/gold-pipeline-v1`.
+It mounts the correct Drive account, verifies the existing Silver snapshot,
+checks for conflicting immutable Gold files, runs `scripts/05_build_gold.py`
+and verifies the completed Gold dataset. Install just the base package; Gold
+needs neither the `data` nor the `eda` dependency extras.

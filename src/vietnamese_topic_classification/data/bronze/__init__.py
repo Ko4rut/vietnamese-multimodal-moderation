@@ -8,9 +8,14 @@ from .exceptions import (
     BronzeManifestError,
 )
 from .ingestor import BronzeConfig, BronzeIngestor
+from .model import BronzeIngestResult, BronzeIngestionReport, BronzeManifest, BronzeRecord
 from .reader import BronzeReader
 
 __all__ = [
+    "BronzeRecord",
+    "BronzeManifest",
+    "BronzeIngestionReport",
+    "BronzeIngestResult",
     "BronzeConfig",
     "BronzeIngestor",
     "BronzeReader",

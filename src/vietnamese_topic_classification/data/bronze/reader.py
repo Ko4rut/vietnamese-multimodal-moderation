@@ -6,7 +6,7 @@ import hashlib
 import json
 import re
 from pathlib import Path
-from typing import Any, Iterator
+from typing import Any, Iterator, cast
 
 from vietnamese_topic_classification.data.base_reader import BaseReader
 
@@ -17,6 +17,7 @@ from .exceptions import (
     BronzeIntegrityError,
     BronzeManifestError,
 )
+from .model import BronzeManifest
 
 
 class BronzeReader(BaseReader):
@@ -62,7 +63,7 @@ class BronzeReader(BaseReader):
         if type(manifest["file_size_bytes"]) is not int or manifest["file_size_bytes"] < 0:
             raise BronzeManifestError("Invalid file_size_bytes in Bronze manifest")
 
-        self.manifest = manifest
+        self.manifest: BronzeManifest = cast(BronzeManifest, manifest)
         self.data_path = self.root / "01_bronze" / file_name
         if not self.data_path.is_file():
             raise BronzeFileNotFoundError(f"Bronze snapshot not found: {self.data_path}")
