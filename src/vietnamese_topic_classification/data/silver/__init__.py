@@ -8,7 +8,6 @@ from .exceptions import (
     SilverPublicationError,
     SilverReportError,
 )
-from .pipeline import SilverPipeline
 from .model import (
     SilverPublishedReport,
     SilverQualityReport,
@@ -16,6 +15,7 @@ from .model import (
     SilverRejectedRecord,
     SilverRunResult,
 )
+from .pipeline import SilverPipeline
 from .reader import SilverReader
 from .transformer import SilverTransformer
 from .validator import SilverValidator, ValidationResult

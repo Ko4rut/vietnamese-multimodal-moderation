@@ -15,6 +15,7 @@ from vietnamese_topic_classification.data.bronze import BronzeReader
 from vietnamese_topic_classification.data.silver.exceptions import SilverPublicationError
 from vietnamese_topic_classification.data.silver.model import (
     SilverPublishedReport,
+    SilverRecord,
     SilverRejectedRecord,
     SilverRunResult,
 )
@@ -33,7 +34,7 @@ def _hash_file(path: Path) -> str:
     return digest.hexdigest()
 
 
-def _write_jsonl(handle: Any, item: dict[str, Any]) -> None:
+def _write_jsonl(handle: Any, item: SilverRecord | SilverRejectedRecord) -> None:
     handle.write(json.dumps(item, ensure_ascii=False, sort_keys=True) + "\n")
 
 

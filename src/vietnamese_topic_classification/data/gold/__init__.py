@@ -9,7 +9,6 @@ from .exceptions import (
     GoldPublicationError,
     GoldValidationError,
 )
-from .pipeline import GoldPipeline
 from .model import (
     GoldCandidateAudit,
     GoldManifest,
@@ -20,6 +19,7 @@ from .model import (
     GoldSplitAudit,
     GoldSplitFile,
 )
+from .pipeline import GoldPipeline
 from .reader import GoldReader
 from .splitter import GoldSplitter
 from .validator import GoldValidator

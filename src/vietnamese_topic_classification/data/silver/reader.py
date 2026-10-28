@@ -10,8 +10,6 @@ from typing import Any, Iterator, cast
 
 from vietnamese_topic_classification.data.base_reader import BaseReader
 
-from .model import SilverQualityReport
-
 from .exceptions import (
     SilverException,
     SilverFileNotFoundError,
@@ -19,6 +17,7 @@ from .exceptions import (
     SilverIntegrityError,
     SilverReportError,
 )
+from .model import SilverQualityReport
 
 
 class SilverReader(BaseReader):

@@ -10,8 +10,6 @@ from typing import Any, Iterator, cast
 
 from vietnamese_topic_classification.data.base_reader import BaseReader
 
-from .model import BronzeManifest
-
 from .exceptions import (
     BronzeException,
     BronzeFileNotFoundError,
@@ -19,6 +17,7 @@ from .exceptions import (
     BronzeIntegrityError,
     BronzeManifestError,
 )
+from .model import BronzeManifest
 
 
 class BronzeReader(BaseReader):

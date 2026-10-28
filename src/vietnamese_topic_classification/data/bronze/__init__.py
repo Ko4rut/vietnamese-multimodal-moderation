@@ -8,8 +8,8 @@ from .exceptions import (
     BronzeManifestError,
 )
 from .ingestor import BronzeConfig, BronzeIngestor
-from .reader import BronzeReader
 from .model import BronzeIngestResult, BronzeIngestionReport, BronzeManifest, BronzeRecord
+from .reader import BronzeReader
 
 __all__ = [
     "BronzeRecord",

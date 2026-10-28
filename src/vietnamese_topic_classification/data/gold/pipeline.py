@@ -36,7 +36,7 @@ def _sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 
-def _write_json(path: Path, document: dict[str, Any]) -> None:
+def _write_json(path: Path, document: GoldManifest | GoldQualityReport) -> None:
     path.write_text(
         json.dumps(document, ensure_ascii=False, sort_keys=True, indent=2) + "\n",
         encoding="utf-8",
