@@ -76,21 +76,22 @@ class GoldPipeline:
         self.config = config or GoldConfig()
         self.root = Path(output_root) if output_root is not None else reader.root
 
-    def run(self) -> GoldPipelineResult:
-        source = self.reader.verify()
-        if source["records"] == 0:
-            raise GoldValidationError("Silver has no accepted records; cannot build Gold")
-        validator = GoldValidator()
+    def planned_paths(self, source_sha256: str) -> dict[str, Path]:
+        """Compute immutable output paths without creating any artifacts.
+
+        Verify the Silver snapshot first and pass the returned SHA-256. Keeping
+        this in the pipeline lets notebooks perform a matching safe preflight.
+        """
         params = {
-            "source_sha256": source["sha256"],
+            "source_sha256": source_sha256,
             "config": self.config.as_dict(),
-            "label_to_id": validator.label_to_id,
+            "label_to_id": GoldValidator().label_to_id,
             "pipeline_version": VERSION,
         }
         config_hash = hashlib.sha256(
             json.dumps(params, sort_keys=True, separators=(",", ":")).encode("utf-8")
         ).hexdigest()[:10]
-        suffix = f"{source['sha256'][:12]}_{config_hash}"
+        suffix = f"{source_sha256[:12]}_{config_hash}"
         paths = {
             split: self.root / "03_gold" / f"gold_{split}_{VERSION}_{suffix}.jsonl"
             for split in SPLITS
@@ -99,6 +100,14 @@ class GoldPipeline:
         paths["manifest"] = (
             self.root / "03_gold" / "manifests" / f"gold_manifest_{VERSION}_{suffix}.json"
         )
+        return paths
+
+    def run(self) -> GoldPipelineResult:
+        source = self.reader.verify()
+        if source["records"] == 0:
+            raise GoldValidationError("Silver has no accepted records; cannot build Gold")
+        validator = GoldValidator()
+        paths = self.planned_paths(source["sha256"])
         if any(
             path.exists() or path.with_name(path.name + ".uploading").exists()
             for path in paths.values()

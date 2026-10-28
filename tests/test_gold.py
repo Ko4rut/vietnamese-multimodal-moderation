@@ -212,3 +212,15 @@ def test_too_many_candidates_fails_closed():
 def test_empty_silver_cannot_create_gold(tmp_path):
     with pytest.raises(GoldValidationError, match="no accepted"):
         GoldPipeline(_silver(tmp_path, [])).run()
+
+
+def test_gold_planned_paths_match_published_paths(tmp_path):
+    """Colab preflight must use the same destination names as the CLI."""
+    source = _silver(tmp_path)
+    builder = GoldPipeline(source)
+    expected = builder.planned_paths(source.verify()["sha256"])
+    assert set(expected) == {"train", "validation", "test", "report", "manifest"}
+    assert not any(path.exists() for path in expected.values())
+    result = builder.run()
+    assert {name: str(path) for name, path in expected.items()} == result["paths"]
+    assert all(path.is_file() for path in expected.values())

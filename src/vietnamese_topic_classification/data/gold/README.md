@@ -87,3 +87,16 @@ prefer iter_split("train") for model fit.
 
 Gold V1 is a baseline. Do not claim that the 25 automatically assigned VTSNLP
 topic labels have been manually verified, or that crawl noise has been removed.
+
+## Google Colab (existing Silver snapshot)
+
+Open [notebooks/colab_gold_runner.ipynb](../../../../notebooks/colab_gold_runner.ipynb)
+using the `feat/gold-pipeline-v1` branch. The notebook clones the public repository,
+installs only the base package dependencies, mounts the correct Drive account,
+verifies Silver, checks deterministic Gold destination paths, runs the existing
+`scripts/05_build_gold.py` CLI, then validates the manifest, all three split
+checksums, row counts, label mapping and cross-split IDs.
+
+The notebook refuses to rebuild Gold if files or stale `.uploading` artifacts
+already exist. Gold only needs CPU; no Hugging Face redownload or GPU is required.
+The full 50K near-duplicate candidate scan may need substantial time/RAM.
