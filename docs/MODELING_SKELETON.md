@@ -1,52 +1,27 @@
-# Modeling skeleton (Phase 0)
+# Modeling V1: TF-IDF baselines
 
-This branch only introduces the module boundaries requested for text-classification
-experiments. **It does not train a model, fit TF-IDF, evaluate predictions, create
-artifacts, change Gold, or add scikit-learn as a runtime dependency.**
+Phase 0 skeleton is now implemented. The Gold snapshot stays immutable.
 
-## Layout
-
-- `training/model.py`: typed split and experiment-result contracts.
-- `training/config.py`: validated, immutable top-level experiment config.
-- `training/dataset.py`: future verified `GoldReader` adapter.
-- `training/factory.py`: future features + classifier construction.
-- `training/runner.py`: future training/validation orchestration.
-- `training/artifacts.py`: future immutable artifact publication.
-- `evaluation/model.py`: typed classification-metrics contract.
-- `evaluation/metrics.py`: future pure multiclass metrics.
-- `evaluation/report.py`: future report publication.
-
-Each unfinished public entrypoint intentionally raises `NotImplementedError`.
-It must not silently claim training, evaluation, or publication succeeded.
-
-## Contract example
-
-```python
-from vietnamese_topic_classification.training import ExperimentConfig
-
-config = ExperimentConfig(
-    name="tfidf_logreg_v1",
-    gold_manifest_name="gold_manifest_v1_8cadceaf8fd0_cf811f9b2c.json",
-)
-print(config.features.kind, config.classifier.kind)
-```
-
-Do not call `run_experiment()` yet; the training engine has not been implemented.
-The split adapter must use `GoldReader.verify()`, retain Gold's stable
-`label_id`, and preserve train/validation/test boundaries. TF-IDF must fit
-on train only, validation selects the experiment, and the test split remains
-untouched until a separate final evaluation step.
-
-`factory.py` is the planned extension point. A future
-`Provider + BaseEngine` design can be introduced behind it without forcing
-that abstraction into the initial sklearn baseline.
-
-## Test
+## Setup
 
 ```bash
-python -m pip install -e ".[dev]"
-python -m pytest tests/test_modeling_skeleton.py -q
+python -m pip install -e ".[dev,modeling]"
 ruff check src tests
+pytest -q
 ```
 
-No Google Drive mount or external ML dependency is needed for skeleton tests.
+## Train / validate
+
+```bash
+python scripts/06_train_baseline.py --manifest-name gold_manifest_v1_<id>.json --name tfidf_lr_v1 --output-root /content/drive/MyDrive/experiments
+python scripts/06_train_baseline.py --manifest-name gold_manifest_v1_<id>.json --name tfidf_lr_balanced_v1 --class-weight balanced --output-root /content/drive/MyDrive/experiments
+python scripts/06_train_baseline.py --manifest-name gold_manifest_v1_<id>.json --name tfidf_svc_v1 --classifier linear_svc --output-root /content/drive/MyDrive/experiments
+```
+
+Pass `--data-lake-root` or set `DATA_LAKE_ROOT` in .env. The training runner loads only Gold train and validation (checksums of all three partitions are verified). TF-IDF is fitted by the sklearn Pipeline on train only; validation reports contain accuracy, macro-F1, weighted-F1, per-class F1, and a 25-class confusion matrix. Select a model based on validation Macro-F1, then run the **final test only once**:
+
+```bash
+python scripts/07_evaluate_model.py --artifact-dir /content/drive/MyDrive/experiments/tfidf_lr_v1
+```
+
+Artifacts are write-once per experiment name: model.joblib, config.json, metadata.json, validation_metrics.json; test_metrics.json is only created explicitly. **Do not load untrusted joblib/pickle models.** Gold labels are automatically assigned source labels, not human-verified ground truth.
