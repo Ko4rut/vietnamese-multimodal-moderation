@@ -5,8 +5,8 @@ import pytest
 from vietnamese_topic_classification.training import (
     ClassifierConfig,
     ExperimentConfig,
-    FeatureConfig,
     ExperimentResult,
+    FeatureConfig,
 )
 
 
