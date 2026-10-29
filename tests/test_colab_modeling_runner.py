@@ -21,7 +21,7 @@ def test_colab_modeling_runner_contract():
 
     source = "\n".join(cell["source"] for cell in code_cells)
     for required in (
-        'BRANCH = "feat/colab-modeling-baselines-v1"',
+        'BRANCH = "feat/modeling-diagnostics-v1"',
         'DATA_LAKE_ROOT',
         '"04_gold"',
         'GoldReader(',
@@ -40,8 +40,11 @@ def test_colab_modeling_runner_contract():
         'verify_existing_experiment',
         'manifest_sha256',
         'RUN_BALANCED = False',
-        'SCIKIT_VERSION_DOES_NOT_EXIST',
-    )[:-1]:
+        'scripts/08_plot_diagnostics.py',
+        'diagnostics_v1',
+        'train_vs_validation.png',
+        'correct_counts_by_class.png',
+    ):
         assert required in source
     assert "scripts/07_evaluate_model.py" not in source
     assert 'iter_split("test")' not in source
