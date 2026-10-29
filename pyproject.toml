@@ -13,8 +13,7 @@ dependencies = ["PyYAML>=6.0,<7", "python-dotenv>=1.0,<2"]
 [project.optional-dependencies]
 dev = ["pytest>=8,<10", "ruff>=0.8,<1"]
 data = ["datasets>=3.0"]
-# Silver EDA notebook and local Jupyter Lab runtime.
-# Install with: python -m pip install -e ".[eda]"
+modeling = ["scikit-learn>=1.3,<2", "joblib>=1.3,<2"]
 eda = [
     "numpy>=1.24,<3",
     "pandas>=2.0,<3",

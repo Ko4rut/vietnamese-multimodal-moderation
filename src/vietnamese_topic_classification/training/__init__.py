@@ -1,7 +1,4 @@
-"""Training scaffolding for reproducible Vietnamese topic classification.
-
-Importing this package does not load a dataset or train a model.
-"""
+"""Reproducible modeling baseline; importing does not fit any model."""
 
 from .config import ClassifierConfig, ExperimentConfig, FeatureConfig
 from .model import DatasetSplits, ExperimentResult, TextSplit
