@@ -22,7 +22,6 @@ from vietnamese_topic_classification.data.silver.model import (
 from vietnamese_topic_classification.data.silver.transformer import SilverTransformer
 from vietnamese_topic_classification.data.silver.validator import SilverValidator
 
-
 SILVER_VERSION = "v1"
 
 

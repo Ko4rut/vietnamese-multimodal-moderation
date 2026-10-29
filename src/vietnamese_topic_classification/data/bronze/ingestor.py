@@ -21,8 +21,8 @@ from typing import Any, Iterator, Mapping
 from vietnamese_topic_classification.config import load_domain_config
 
 from .model import (
-    BronzeIngestResult,
     BronzeIngestionReport,
+    BronzeIngestResult,
     BronzePublishedManifest,
     BronzeRecord,
 )
