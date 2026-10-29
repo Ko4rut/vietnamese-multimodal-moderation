@@ -92,3 +92,36 @@ def test_v2_rejects_v2_as_source(tmp_path):
     reader.report_path.write_text(json.dumps(data))
     with pytest.raises(ValueError, match="requires a Silver V1"):
         SilverV2Pipeline(SilverReader(tmp_path, "v1.json"))
+
+def test_structured_related_list_is_cleaned_without_copyright():
+    body = "Bài viết giới thiệu chương trình học tại trường. " * 30
+    footer = ("\nBài viết liên quan\n"
+              "Cách chuẩn bị hồ sơ đại học\n"
+              "Học phí theo từng chương trình\n"
+              "Mẫu đơn xét tuyển mới nhất")
+    result = SilverV2Cleaner().clean(body + footer)
+    assert result.action == "cleaned"
+    assert result.text == body.strip()
+    assert "structured_related_list" in result.signals
+
+
+def test_short_or_citation_related_sections_are_review_only():
+    body = "Phân tích nghiên cứu khoa học. " * 30
+    short = body + "\nBài viết liên quan\nCách đọc sách khoa học"
+    citations = (body + "\nBài viết liên quan\nTài liệu tham khảo\n"
+                 "Nghiên cứu A có kết quả\nNghiên cứu B có kết quả\n"
+                 "Nghiên cứu C có kết quả")
+    for text in (short, citations):
+        result = SilverV2Cleaner().clean(text)
+        assert result.action == "review"
+        assert result.text == text
+
+
+def test_footer_only_at_tail_and_guardrail_for_structured_links():
+    body = "Nội dung chính về kinh tế trong nhiều năm. " * 23
+    footer = ("\nTin liên quan\n" + "\n".join(
+        "Bài viết về lãi suất ngân hàng trung ương" for _ in range(50)
+    ))
+    result = SilverV2Cleaner().clean(body + footer)
+    assert result.action in ("unchanged", "guardrail")
+    assert result.text == body + footer

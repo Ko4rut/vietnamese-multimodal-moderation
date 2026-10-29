@@ -12,7 +12,7 @@ from typing import Literal
 
 from .model_v2 import SilverV2CleaningDecision
 
-RULESET_VERSION = "silver-v2-tail-v1"
+RULESET_VERSION = "silver-v2-tail-v2"
 
 # Keep these anchors strict and line-oriented. A mention of "bản quyền"
 # inside an article, for example, must never trigger removal.
@@ -32,7 +32,8 @@ _STRONG = {
 }
 _WEAK = {
     "related_articles": re.compile(
-        r"^(?:bài viết (?:liên quan|mới|khác)|tin (?:liên quan|mới nhất)"
+        r"^(?:bài viết (?:liên quan|mới|khác|xem nhiều|phổ biến|gần đây)"
+        r"|tin (?:liên quan|mới nhất|mới|khác)"
         r"|các tin khác|xem nhiều|post navigation|check also|you may also like"
         r"|có thể bạn quan tâm)\s*[:：-]?\s*$",
         re.IGNORECASE,
@@ -40,7 +41,8 @@ _WEAK = {
     "navigation": re.compile(
         r"^(?:trang chủ\s*\|\s*|chính sách bảo mật\s*(?:\||$)"
         r"|điều khoản sử dụng\s*(?:\||$)|liên hệ quảng cáo\s*(?:\||$)"
-        r"|quảng cáo\s*$)",
+        r"|quảng cáo\s*$|danh mục bài viết\s*$|chuyên mục\s*$"
+        r"|liên kết hữu ích\s*$)",
         re.IGNORECASE,
     ),
     "html_js": re.compile(
@@ -49,6 +51,29 @@ _WEAK = {
     ),
 }
 _ALL = {**_STRONG, **_WEAK}
+_CITATION_HEADING = re.compile(
+    r"^(?:nguồn tham khảo|tài liệu tham khảo|references|nguồn trích dẫn)\\s*:?",
+    re.IGNORECASE,
+)
+
+
+def _is_structured_related_list(lines: list[str], heading_index: int) -> bool:
+    """Require multiple title-like lines, not merely a heading mentioning related posts.
+
+    Reference/bibliography sections are kept for human review to avoid losing
+    citations that may be meaningful to the article.
+    """
+    remaining = [line for line in lines[heading_index + 1 :] if line]
+    if len(remaining) < 3 or any(_CITATION_HEADING.match(line) for line in remaining):
+        return False
+    first = remaining[:12]
+    title_like = sum(
+        1 for line in first
+        if 12 <= len(line) <= 200
+        and not line.startswith(("http://", "https://"))
+    )
+    return title_like >= 3
+
 
 
 @dataclass(frozen=True, slots=True)
@@ -103,32 +128,52 @@ class SilverV2Cleaner:
             return SilverV2CleaningDecision(text=text, action="unchanged", signals=(),
                                             removed_chars=0, removed_preview="")
 
-        signals = tuple(sorted({m[2] for m in tail}))
+        signals = set(m[2] for m in tail)
         strong = [m for m in tail if m[3] == "strong"]
-        if not strong:
-            return SilverV2CleaningDecision(text=text, action="review", signals=signals,
-                                            removed_chars=0, removed_preview="")
-
-        # Do not cut at a weak heading alone. An earlier weak marker is safe
-        # only if another strong footer indicator follows it in the same tail.
-        first_strong = strong[0]
-        candidates = [
-            m for m in tail if m[0] <= first_strong[0] and m[2] == "related_articles"
+        stripped_lines = [line.strip() for line in lines]
+        structured = [
+            m for m in tail
+            if m[2] == "related_articles"
+            and _is_structured_related_list(stripped_lines, m[1])
         ]
-        start = candidates[0][0] if candidates else first_strong[0]
-        kept = text[:start].rstrip()
-        removed = len(text) - len(kept)
-        if (
-            len(kept) < self.config.min_retained_chars
-            or removed > self.config.max_removed_fraction * len(text)
-        ):
-            return SilverV2CleaningDecision(text=text, action="guardrail", signals=signals,
-                                            removed_chars=0, removed_preview="")
+        if structured:
+            signals.add("structured_related_list")
+        signal_names = tuple(sorted(signals))
+
+        # Independent, corroborated link-list structure can justify removing
+        # a suffix without a separate copyright marker. A single heading cannot.
+        candidate_starts: list[int] = [m[0] for m in structured]
+        if strong:
+            first_strong = strong[0]
+            earlier_related = [
+                m for m in tail
+                if m[2] == "related_articles" and m[0] <= first_strong[0]
+            ]
+            if earlier_related:
+                candidate_starts.append(earlier_related[0][0])
+            # If a broad earlier cutoff fails the guardrail, a narrower cut
+            # from the strong marker can still remove a safe trailing suffix.
+            candidate_starts.append(first_strong[0])
+
+        if not candidate_starts:
+            return SilverV2CleaningDecision(
+                text=text, action="review", signals=signal_names,
+                removed_chars=0, removed_preview="",
+            )
+
+        for start in sorted(set(candidate_starts)):
+            kept = text[:start].rstrip()
+            removed = len(text) - len(kept)
+            if (
+                len(kept) >= self.config.min_retained_chars
+                and removed <= self.config.max_removed_fraction * len(text)
+            ):
+                return SilverV2CleaningDecision(
+                    text=kept, action="cleaned", signals=signal_names,
+                    removed_chars=removed, removed_preview=text[len(kept):].strip()[:240],
+                )
 
         return SilverV2CleaningDecision(
-            text=kept,
-            action="cleaned",
-            signals=signals,
-            removed_chars=removed,
-            removed_preview=text[len(kept):].strip()[:240],
+            text=text, action="guardrail", signals=signal_names,
+            removed_chars=0, removed_preview="",
         )
