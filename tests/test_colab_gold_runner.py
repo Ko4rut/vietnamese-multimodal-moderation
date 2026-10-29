@@ -29,7 +29,7 @@ def test_gold_colab_runner_contract():
         "gold.planned_paths(",
         ".uploading",
         "GoldReader(",
-        "existing.verify()",
+        "existing_reader.verify()",
         "scripts/05_build_gold.py",
         '"--data-lake-root"',
         '"--report-name"',
