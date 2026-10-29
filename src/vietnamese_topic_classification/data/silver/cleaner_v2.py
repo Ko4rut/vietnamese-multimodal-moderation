@@ -123,6 +123,8 @@ class SilverV2Cleaner:
             pos += len(line)
             if not corpus.is_repeated_ui(line, position=fraction):
                 keep.append(line)
+        if len(keep) == len(lines):
+            return text, 0
         result = "".join(keep).strip()
         removed = len(text) - len(result)
         if (
