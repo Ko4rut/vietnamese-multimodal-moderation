@@ -1,7 +1,5 @@
 """Typed training contracts; Gold remains unchanged."""
 
-from __future__ import annotations
-
 from typing import TypedDict
 
 from typing_extensions import NotRequired
