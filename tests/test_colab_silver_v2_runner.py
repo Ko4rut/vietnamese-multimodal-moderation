@@ -37,3 +37,24 @@ def test_colab_silver_v2_runner_import_and_execution_contract():
     assert "PUBLISH = False" in source
     assert "expected[\"report\"]" in source
     assert "01_ingest_bronze.py" not in source
+
+
+def test_colab_silver_v2_clears_stale_project_modules_before_import():
+    """Refreshing a checkout must purge ALL imported project modules."""
+    nb = json.loads(NOTEBOOK.read_text(encoding="utf-8"))
+    by_id = {cell["id"]: cell["source"] for cell in nb["cells"]}
+    setup = by_id["setup"]
+    assert 'name.startswith(PREFIX + ".")' in setup
+    assert "del sys.modules[module_name]" in setup
+    assert setup.index("del sys.modules[module_name]") < setup.index(
+        "from vietnamese_topic_classification.data.silver.cleaner_v2"
+    )
+    assert 'EXPECTED_RULESET = "silver-v2-corpus-aware-v1"' in setup
+    assert 'inspect.signature(SilverV2Cleaner.clean)' in setup
+    assert "actual_cleaner_path" in setup
+    assert "rev-parse" in setup
+
+    qa = by_id["review-examples"]
+    assert 'inspect.signature(type(pipeline.cleaner).clean)' in qa
+    assert "Rerun the setup" in qa
+    assert "corpus = build_corpus_stats(reader.iter_records())" in qa
