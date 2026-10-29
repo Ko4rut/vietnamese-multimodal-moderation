@@ -1,0 +1,49 @@
+"""Validate Colab modeling notebook without Colab, Drive or model dependencies."""
+
+import ast
+import json
+from pathlib import Path
+
+NOTEBOOK = Path(__file__).resolve().parents[1] / "notebooks/colab_modeling_runner.ipynb"
+
+
+def test_colab_modeling_runner_contract():
+    notebook = json.loads(NOTEBOOK.read_text(encoding="utf-8"))
+    assert notebook["nbformat"] == 4
+    cells = notebook["cells"]
+    assert len(cells) >= 8
+    assert len({cell["id"] for cell in cells}) == len(cells)
+    code_cells = [cell for cell in cells if cell["cell_type"] == "code"]
+    for cell in code_cells:
+        ast.parse(cell["source"])
+        assert cell["outputs"] == []
+        assert cell["execution_count"] is None
+
+    source = "\n".join(cell["source"] for cell in code_cells)
+    for required in (
+        'BRANCH = "feat/colab-modeling-baselines-v1"',
+        'DATA_LAKE_ROOT',
+        '"04_gold"',
+        'GoldReader(',
+        'reader.verify()',
+        '"--data-lake-root"',
+        '"--manifest-name"',
+        '"--classifier"',
+        '"--class-weight"',
+        '"--max-features"',
+        'scripts/06_train_baseline.py',
+        '"logistic_regression"',
+        '"linear_svc"',
+        'macro_f1',
+        'predict_proba',
+        'joblib.load',
+        'verify_existing_experiment',
+        'manifest_sha256',
+        'RUN_BALANCED = False',
+        'SCIKIT_VERSION_DOES_NOT_EXIST',
+    )[:-1]:
+        assert required in source
+    assert "scripts/07_evaluate_model.py" not in source
+    assert 'iter_split("test")' not in source
+    assert '"03_gold"' not in source
+    assert '01_ingest_bronze.py' not in source
