@@ -10,9 +10,10 @@ import re
 from dataclasses import dataclass
 from typing import Literal
 
+from .corpus_v2 import CorpusV2Stats
 from .model_v2 import SilverV2CleaningDecision
 
-RULESET_VERSION = "silver-v2-tail-v2"
+RULESET_VERSION = "silver-v2-corpus-aware-v1"
 
 # Keep these anchors strict and line-oriented. A mention of "bản quyền"
 # inside an article, for example, must never trigger removal.
@@ -96,7 +97,43 @@ class SilverV2Cleaner:
     def __init__(self, config: SilverV2CleanerConfig | None = None) -> None:
         self.config = config or SilverV2CleanerConfig()
 
-    def clean(self, text: str) -> SilverV2CleaningDecision:
+    def clean(self, text: str, corpus: CorpusV2Stats | None = None) -> SilverV2CleaningDecision:
+        if corpus is None:
+            return self._clean_tail(text)
+        stripped, removed = self._remove_repeated_ui(text, corpus)
+        decision = self._clean_tail(stripped)
+        if not removed:
+            return decision
+        return SilverV2CleaningDecision(
+            text=decision.text,
+            action="cleaned" if decision.action == "unchanged" else decision.action,
+            signals=tuple(sorted(set(decision.signals) | {"corpus_repeated_ui"})),
+            removed_chars=decision.removed_chars + removed,
+            removed_preview=decision.removed_preview,
+        )
+
+    def _remove_repeated_ui(
+        self, text: str, corpus: CorpusV2Stats,
+    ) -> tuple[str, int]:
+        lines = text.splitlines(keepends=True)
+        keep: list[str] = []
+        pos = 0
+        for line in lines:
+            fraction = pos / max(1, len(text))
+            pos += len(line)
+            if not corpus.is_repeated_ui(line, position=fraction):
+                keep.append(line)
+        result = "".join(keep).strip()
+        removed = len(text) - len(result)
+        if (
+            not result
+            or len(result) < self.config.min_retained_chars
+            or removed > self.config.max_removed_fraction * len(text)
+        ):
+            return text, 0
+        return result, removed
+
+    def _clean_tail(self, text: str) -> SilverV2CleaningDecision:
         if not text.strip():
             return SilverV2CleaningDecision(text=text, action="unchanged", signals=(),
                                             removed_chars=0, removed_preview="")

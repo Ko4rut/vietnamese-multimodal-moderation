@@ -125,3 +125,23 @@ def test_footer_only_at_tail_and_guardrail_for_structured_links():
     result = SilverV2Cleaner().clean(body + footer)
     assert result.action in ("unchanged", "guardrail")
     assert result.text == body + footer
+
+def test_corpus_aware_repeated_ui_keeps_article_content():
+    from vietnamese_topic_classification.data.silver.corpus_v2 import build_corpus_stats
+
+    body = "Nội dung bài báo dài. " * 20
+    source = "Skip to content\n" + body + "\nEmail *\n"
+    corpus = build_corpus_stats([{"text": source}] * 4, min_document_frequency=2)
+    result = SilverV2Cleaner().clean(source, corpus=corpus)
+    assert "Skip to content" not in result.text
+    assert "Email *" not in result.text
+    assert "Nội dung bài báo dài." in result.text
+
+
+def test_corpus_aware_preserves_references():
+    from vietnamese_topic_classification.data.silver.corpus_v2 import build_corpus_stats
+
+    source = "Tài liệu tham khảo\n" + "Nội dung chính. " * 30 + "\nKết luận"
+    corpus = build_corpus_stats([{"text": source}] * 4, min_document_frequency=2)
+    result = SilverV2Cleaner().clean(source, corpus=corpus)
+    assert result.text == source

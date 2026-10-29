@@ -63,3 +63,17 @@ Exploratory replay against the 50,000 text records in the pinned **Gold V1** sna
 | Unchanged | 47,475 | 47,299 |
 
 The pilot counted **958 additional cleanable suffixes**, but **these are heuristic candidates, not verified true positives**. Evaluate the examples printed in the notebook before publication and sample unflagged records to estimate residual noise. Cleaning is not a substitute for manual labeling or source-aware HTML extraction.
+
+## Corpus-aware cleaning in Silver V2
+
+Silver V2 now performs a **two-pass**, deterministic process over verified
+Silver V1: the first pass counts interface-like lines appearing in distinct
+documents; the second pass cleans repeated UI blocks near the head or tail.
+Only known UI-like strings repeated in at least 25 documents qualify.
+Frequent ordinary text, references, conclusions, and product descriptions are
+not deleted merely for being frequent.
+
+The new ruleset fingerprint is `silver-v2-corpus-aware-v1`, ensuring an
+immutable output filename different from already published V2 artifacts.
+The quality report includes corpus size and repeated UI block counts.
+No extra libraries, paid APIs, labeling, or ML training are needed.

@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any, TextIO
 
 from .cleaner_v2 import RULESET_VERSION, SilverV2Cleaner
+from .corpus_v2 import build_corpus_stats
 from .exceptions import SilverPublicationError
 from .model import SilverRecord
 from .model_v2 import SilverV2AuditRow, SilverV2Report, SilverV2RunResult
@@ -95,6 +96,9 @@ class SilverV2Pipeline:
         ):
             raise SilverPublicationError("Silver V2 output exists or stale upload found")
 
+        corpus = build_corpus_stats(self.reader.iter_records())
+        if corpus.documents != verified["records"]:
+            raise RuntimeError("Silver V2 corpus prepass row count mismatch")
         counts: Counter[str] = Counter()
         signals: Counter[str] = Counter()
         labels: Counter[str] = Counter()
@@ -120,7 +124,7 @@ class SilverV2Pipeline:
                         or not isinstance(original.get("quality_flags"), list)
                     ):
                         raise ValueError(f"Invalid pinned Silver V1 record at line {lineno}")
-                    decision = self.cleaner.clean(original["text"])
+                    decision = self.cleaner.clean(original["text"], corpus=corpus)
                     if decision.action != "unchanged":
                         counts["detected"] += 1
                     counts[decision.action] += 1
@@ -189,6 +193,11 @@ class SilverV2Pipeline:
             report: SilverV2Report = {
                 "pipeline_version": VERSION,
                 "ruleset_version": RULESET_VERSION,
+                "corpus_stats": {
+                    "documents": corpus.documents,
+                    "min_document_frequency": corpus.min_document_frequency,
+                    "repeated_ui_blocks": len(corpus.document_frequency),
+                },
                 "cleaning_config": asdict(self.cleaner.config),
                 "source_report": self.reader.report_path.name,
                 "source_silver_sha256": verified["sha256"],
