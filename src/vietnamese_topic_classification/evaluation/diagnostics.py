@@ -6,7 +6,6 @@ import json
 import shutil
 import tempfile
 import time
-from collections import Counter
 from pathlib import Path
 from typing import Sequence
 
