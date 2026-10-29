@@ -106,7 +106,7 @@ class SilverV2Cleaner:
             return decision
         return SilverV2CleaningDecision(
             text=decision.text,
-            action="cleaned" if decision.action == "unchanged" else decision.action,
+            action="cleaned" if decision.action in ("unchanged", "guardrail") else decision.action,
             signals=tuple(sorted(set(decision.signals) | {"corpus_repeated_ui"})),
             removed_chars=decision.removed_chars + removed,
             removed_preview=decision.removed_preview,

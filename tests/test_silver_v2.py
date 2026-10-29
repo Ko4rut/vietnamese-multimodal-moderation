@@ -145,3 +145,19 @@ def test_corpus_aware_preserves_references():
     corpus = build_corpus_stats([{"text": source}] * 4, min_document_frequency=2)
     result = SilverV2Cleaner().clean(source, corpus=corpus)
     assert result.text == source
+
+
+def test_v2_pipeline_corpus_prepass_removes_ui_from_published_text(tmp_path):
+    body = "Bài báo về chủ đề văn hóa và lịch sử. " * 20
+    reader = make_reader(tmp_path, [
+        "Skip to content\\n" + body + "\\nEmail *"
+        for _ in range(25)
+    ])
+    # Duplicate cleaned articles are correctly rejected after stripping.
+    result = SilverV2Pipeline(reader).run(dry_run=True)
+    assert result["report"]["input_rows"] == 25
+    assert result["report"]["corpus_stats"]["documents"] == 25
+    assert result["report"]["corpus_stats"]["repeated_ui_blocks"] >= 2
+    assert result["report"]["cleaned_rows"] == 25
+    assert result["report"]["accepted_rows"] == 1
+    assert result["report"]["rejected_rows"] == 24
