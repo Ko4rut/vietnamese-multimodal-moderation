@@ -150,7 +150,7 @@ def test_corpus_aware_preserves_references():
 def test_v2_pipeline_corpus_prepass_removes_ui_from_published_text(tmp_path):
     body = "Bài báo về chủ đề văn hóa và lịch sử. " * 20
     reader = make_reader(tmp_path, [
-        "Skip to content\\n" + body + "\\nEmail *"
+        "Skip to content\n" + body + "\nEmail *"
         for _ in range(25)
     ])
     # Duplicate cleaned articles are correctly rejected after stripping.
