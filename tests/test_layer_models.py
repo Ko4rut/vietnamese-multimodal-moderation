@@ -6,8 +6,8 @@ from typing import get_type_hints
 
 from vietnamese_topic_classification.data.bronze import BronzeManifest, BronzeRecord
 from vietnamese_topic_classification.data.bronze.model import (
-    BronzeIngestResult,
     BronzeIngestionReport,
+    BronzeIngestResult,
     BronzePublishedManifest,
 )
 from vietnamese_topic_classification.data.gold import GoldManifest, GoldRecord
