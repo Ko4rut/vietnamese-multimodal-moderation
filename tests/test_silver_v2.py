@@ -47,7 +47,7 @@ def test_ambiguous_related_heading_and_middle_copyright_preserved():
 
 
 def test_guardrail_prevents_large_content_loss():
-    text = ("Bài chính. " * 22) + "\nCopyright © 2026\n" + ("Links " * 100)
+    text = ("Bài chính. " * 80) + "\nCopyright © 2026\n" + ("Links " * 100)
     result = SilverV2Cleaner().clean(text)
     assert result.action == "guardrail"
     assert result.text == text
