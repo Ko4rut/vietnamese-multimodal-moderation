@@ -52,7 +52,7 @@ _WEAK = {
 }
 _ALL = {**_STRONG, **_WEAK}
 _CITATION_HEADING = re.compile(
-    r"^(?:nguồn tham khảo|tài liệu tham khảo|references|nguồn trích dẫn)\\s*:?",
+    r"^(?:nguồn tham khảo|tài liệu tham khảo|references|nguồn trích dẫn)\s*:?\s*$",
     re.IGNORECASE,
 )
 
@@ -73,7 +73,6 @@ def _is_structured_related_list(lines: list[str], heading_index: int) -> bool:
         and not line.startswith(("http://", "https://"))
     )
     return title_like >= 3
-
 
 
 @dataclass(frozen=True, slots=True)
