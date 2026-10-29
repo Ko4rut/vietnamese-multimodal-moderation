@@ -6,6 +6,7 @@ from vietnamese_topic_classification.training import (
     ClassifierConfig,
     ExperimentConfig,
     FeatureConfig,
+    ExperimentResult,
 )
 
 
@@ -37,3 +38,9 @@ def test_bad_manifest(manifest):
 def test_negative_seed():
     with pytest.raises(ValueError, match="seed"):
         ExperimentConfig(name="baseline", gold_manifest_name="gold.json", seed=-1)
+
+
+def test_experiment_result_optional_report_contract():
+    """Optional report annotation works across supported Python versions."""
+    assert "validation_report" in ExperimentResult.__optional_keys__
+    assert "experiment_name" in ExperimentResult.__required_keys__
