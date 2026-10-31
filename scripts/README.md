@@ -14,7 +14,7 @@ The output root is illustrative; inspect the actual mounted path first.
 Bronze writes:
 - \`01_bronze/vtsnlp_raw_sample_<revision>_seed<seed>_buf<buffer>_n<N>.jsonl\`
 - \`00_source_metadata/source_manifest_<...>.json\`
-- \`05_reports/bronze_ingestion_<...>.json\`
+- \`04_reports/bronze_ingestion_<...>.json\`
 
 The ingestion source revision is pinned in \`config/domains_v1.yaml\`.
 Source values are not cleaned, filtered, balanced or padded at this stage.

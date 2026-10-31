@@ -21,9 +21,13 @@ src/vietnamese_topic_classification/
   config/domains_v1.yaml     # Task, source revision, 25 labels
   config/settings.py        # DataLakeConfig and DATA_LAKE_ROOT configuration
   data/bronze/              # Bronze ingestor, reader and exceptions
-  data/silver/              # Silver V1 validation, normalization and publishing
-  training/                 # Reserved
-  evaluation/               # Reserved
+  data/silver/v1/           # Silver V1 schema validation and normalization
+  data/silver/v2/           # Silver V2 corpus-aware cleaning and audit
+  data/silver/reader.py     # Version-aware Silver snapshot verification
+  data/colab_lake.py        # Teammate-specific Drive mount resolution
+  data/gold/                # Gold V1 train/validation/test and manifests
+  training/                 # TF-IDF Logistic Regression and LinearSVC baselines
+  evaluation/               # Metrics and diagnostics
 tests/test_package.py       # Offline packaging and config tests
 .github/workflows/ci.yml    # Lint, tests and installed-package smoke test
 scripts/                    # Bronze ingestion CLI and related tooling
@@ -62,6 +66,15 @@ The existing Drive folder may still be named `vietnamese-multilabel-topic-classi
 - **Gold:** reproducible split datasets and label mappings; protect against duplicate/near-duplicate train–test leakage.
 - **Training:** model-specific tokenization/padding for Transformers; TF-IDF baseline needs no padding.
 
-The earlier 3K balanced Silver candidate file and multi-label annotation template are legacy exploration artifacts, **not** the intended 50K single-label baseline. Silver V1 is implemented on this feature branch; Gold transformations are not implemented yet.
+The earlier 3K balanced Silver candidate file and multi-label annotation template are legacy exploration artifacts, **not** the intended 50K single-label baseline. Silver V1, Silver V2, Gold V1 and TF-IDF modeling are implemented; Silver snapshots on Drive are segregated by version.
 
 See [Silver V1 pipeline details](src/vietnamese_topic_classification/data/silver/README.md), [Colab Silver runner](notebooks/colab_silver_runner.ipynb), [architecture](docs/ARCHITECTURE.md) and [implementation plan](docs/IMPLEMENTATION_PLAN.md).
+
+
+## Team onboarding: run Colab without rewriting the lake
+
+For colleagues, start with **[End-to-end Colab runner](notebooks/colab_data_lake_end_to_end.ipynb)** and **[Team setup guide](docs/COLAB_TEAM_SETUP.md)**. After the refactor PR is merged, the notebook fetches `main`, installs the project, mounts each user's Drive, verifies existing immutable data, processes missing Bronze/Silver V1/Gold snapshots, and runs Silver V2 as a dry-run. Publishing Silver V2 is explicitly opt-in.
+
+**Required:** The data owner must share the Google Drive Data Lake folder with each collaborator; each user must authorize Colab's Drive mount. A GitHub clone cannot download private Drive data or mount the cloud folder onto a teammate's physical computer. Add a shortcut named `vietnamese-multilabel-topic-classification` to My Drive, or provide the real Colab-mounted `DATA_LAKE_ROOT`.
+
+Silver V1: `02_silver/v1/` and `04_reports/silver/v1/`. Silver V2: `02_silver/v2/` and `04_reports/silver/v2/`. Bronze and Gold retain their existing locations. No duplicate root-level Silver implementation modules remain.

@@ -12,12 +12,12 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, TextIO
 
-from .cleaner_v2 import RULESET_VERSION, SilverV2Cleaner
-from .corpus_v2 import build_corpus_stats
-from .exceptions import SilverPublicationError
-from .model import SilverRecord
-from .model_v2 import SilverV2AuditRow, SilverV2Report, SilverV2RunResult
-from .reader import SilverReader
+from ..exceptions import SilverPublicationError
+from ..reader import SilverReader
+from ..v1.model import SilverRecord
+from .cleaner import RULESET_VERSION, SilverV2Cleaner
+from .corpus import build_corpus_stats
+from .model import SilverV2AuditRow, SilverV2Report, SilverV2RunResult
 
 VERSION = "v2"
 
@@ -85,18 +85,25 @@ class SilverV2Pipeline:
             / f"vtsnlp_silver_{VERSION}_{suffix}.jsonl",
             "rejected": self.root / "02_silver" / VERSION
             / f"vtsnlp_rejected_{VERSION}_{suffix}.jsonl",
-            "audit": self.root / "05_reports" / "silver" / VERSION
+            "audit": self.root / "04_reports" / "silver" / VERSION
             / f"silver_audit_{VERSION}_{suffix}.jsonl",
-            "report": self.root / "05_reports" / "silver" / VERSION
+            "report": self.root / "04_reports" / "silver" / VERSION
             / f"silver_quality_{VERSION}_{suffix}.json",
         }
 
     def run(self, *, dry_run: bool = False) -> SilverV2RunResult:
         verified = self.reader.verify()
         paths = self.planned_paths(verified["sha256"])
+        # Also respect pre-migration flat snapshots: publication is write-once.
+        legacy_paths = [
+            self.root / "02_silver" / paths["silver"].name,
+            self.root / "02_silver" / paths["rejected"].name,
+            self.root / "04_reports" / paths["audit"].name,
+            self.root / "04_reports" / paths["report"].name,
+        ]
         if not dry_run and any(
-            p.exists() or p.with_name(p.name + ".uploading").exists()
-            for p in paths.values()
+            path.exists() or path.with_name(path.name + ".uploading").exists()
+            for path in (*paths.values(), *legacy_paths)
         ):
             raise SilverPublicationError("Silver V2 output exists or stale upload found")
 

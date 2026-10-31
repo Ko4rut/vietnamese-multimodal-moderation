@@ -4,11 +4,11 @@ import json
 from pathlib import Path
 
 from vietnamese_topic_classification.config.settings import DataLakeConfig
-from vietnamese_topic_classification.data.silver.cleaner_v2 import (
+from vietnamese_topic_classification.data.silver.v2.cleaner import (
     SilverV2Cleaner,
     SilverV2CleanerConfig,
 )
-from vietnamese_topic_classification.data.silver.pipeline_v2 import SilverV2Pipeline
+from vietnamese_topic_classification.data.silver.v2.pipeline import SilverV2Pipeline
 from vietnamese_topic_classification.data.silver.reader import SilverReader
 
 

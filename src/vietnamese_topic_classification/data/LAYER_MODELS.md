@@ -16,7 +16,7 @@ refactor deliberately does **not** change the shape of published JSONL or JSON
 files, filenames, cleaning, deduplication, label mapping, or Gold split algorithm.
 
 Existing public imports continue working, including
-`from vietnamese_topic_classification.data.silver.validator import ValidationResult`
+`from vietnamese_topic_classification.data.silver.v1.model import ValidationResult`
 and `from vietnamese_topic_classification.data.bronze import BronzeConfig`.
 
 `GoldConfig` stays in `gold/config.py` because it is configuration rather than

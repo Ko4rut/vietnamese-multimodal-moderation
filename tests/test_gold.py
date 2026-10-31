@@ -50,7 +50,7 @@ def _silver(tmp_path, rows=None):
         json.dumps(row, sort_keys=True, ensure_ascii=False) + "\n" for row in rows
     ).encode("utf-8")
     data.write_bytes(payload)
-    reports = tmp_path / "05_reports"
+    reports = tmp_path / "04_reports"
     reports.mkdir(parents=True, exist_ok=True)
     report = {
         "output_files": {"silver": data.name},
@@ -90,12 +90,12 @@ def test_gold_pipeline_publishes_and_reads(tmp_path):
     assert len(ids) == 48
     assert len(list(reader.iter_records())) == 48
     assert result["report"]["near_duplicate_audit"]["exhaustive"] is False
-    assert Path(result["paths"]["train"]).parent == tmp_path / "04_gold"
-    assert Path(result["paths"]["validation"]).parent == tmp_path / "04_gold"
-    assert Path(result["paths"]["test"]).parent == tmp_path / "04_gold"
-    assert Path(result["paths"]["manifest"]).parent == tmp_path / "04_gold" / "manifests"
-    assert Path(result["paths"]["report"]).parent == tmp_path / "05_reports"
-    assert not (tmp_path / "03_gold").exists()
+    assert Path(result["paths"]["train"]).parent == tmp_path / "03_gold"
+    assert Path(result["paths"]["validation"]).parent == tmp_path / "03_gold"
+    assert Path(result["paths"]["test"]).parent == tmp_path / "03_gold"
+    assert Path(result["paths"]["manifest"]).parent == tmp_path / "03_gold" / "manifests"
+    assert Path(result["paths"]["report"]).parent == tmp_path / "04_reports"
+    assert not (tmp_path / "04_gold").exists()
     assert set(result["paths"]) == {"train", "validation", "test", "manifest", "report"}
 
 
@@ -138,7 +138,7 @@ def test_bad_silver_schema_does_not_publish(tmp_path):
     source = SilverReader(tmp_path, "silver_report.json")
     with pytest.raises(GoldValidationError, match="text_length"):
         GoldPipeline(source).run()
-    assert not (tmp_path / "04_gold").exists()
+    assert not (tmp_path / "03_gold").exists()
     assert not (tmp_path / "03_gold").exists()
 
 
@@ -227,9 +227,9 @@ def test_gold_planned_paths_match_published_paths(tmp_path):
     builder = GoldPipeline(source)
     expected = builder.planned_paths(source.verify()["sha256"])
     assert set(expected) == {"train", "validation", "test", "report", "manifest"}
-    assert all(expected[split].parent == tmp_path / "04_gold" for split in ("train", "validation", "test"))
-    assert expected["manifest"].parent == tmp_path / "04_gold" / "manifests"
-    assert expected["report"].parent == tmp_path / "05_reports"
+    assert all(expected[split].parent == tmp_path / "03_gold" for split in ("train", "validation", "test"))
+    assert expected["manifest"].parent == tmp_path / "03_gold" / "manifests"
+    assert expected["report"].parent == tmp_path / "04_reports"
     assert not any(path.exists() for path in expected.values())
     result = builder.run()
     assert {name: str(path) for name, path in expected.items()} == result["paths"]

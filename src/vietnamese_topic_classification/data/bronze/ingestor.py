@@ -106,7 +106,7 @@ class BronzeIngestor:
         outputs = {
             "bronze": root / "01_bronze" / f"vtsnlp_raw_sample_{suffix}.jsonl",
             "manifest": root / "00_source_metadata" / f"source_manifest_{suffix}.json",
-            "report": root / "05_reports" / f"bronze_ingestion_{suffix}.json",
+            "report": root / "04_reports" / f"bronze_ingestion_{suffix}.json",
         }
         existing = [str(p) for p in outputs.values() if p.exists()]
         if existing:

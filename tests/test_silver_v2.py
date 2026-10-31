@@ -5,9 +5,9 @@ import json
 import pytest
 
 from vietnamese_topic_classification.data.silver import SilverReader
-from vietnamese_topic_classification.data.silver.cleaner_v2 import SilverV2Cleaner
 from vietnamese_topic_classification.data.silver.exceptions import SilverPublicationError
-from vietnamese_topic_classification.data.silver.pipeline_v2 import SilverV2Pipeline
+from vietnamese_topic_classification.data.silver.v2.cleaner import SilverV2Cleaner
+from vietnamese_topic_classification.data.silver.v2.pipeline import SilverV2Pipeline
 
 
 def make_reader(tmp_path, texts):
@@ -20,8 +20,8 @@ def make_reader(tmp_path, texts):
     ]
     content = "".join(json.dumps(row, ensure_ascii=False) + "\n" for row in rows)
     (root / "v1.jsonl").write_text(content, encoding="utf-8")
-    (tmp_path / "05_reports").mkdir()
-    (tmp_path / "05_reports" / "v1.json").write_text(json.dumps({
+    (tmp_path / "04_reports").mkdir()
+    (tmp_path / "04_reports" / "v1.json").write_text(json.dumps({
         "pipeline_version": "v1", "output_files": {"silver": "v1.jsonl"},
         "accepted_rows": len(rows),
         "silver_sha256": hashlib.sha256(content.encode()).hexdigest(),
@@ -127,7 +127,7 @@ def test_footer_only_at_tail_and_guardrail_for_structured_links():
     assert result.text == body + footer
 
 def test_corpus_aware_repeated_ui_keeps_article_content():
-    from vietnamese_topic_classification.data.silver.corpus_v2 import build_corpus_stats
+    from vietnamese_topic_classification.data.silver.v2.corpus import build_corpus_stats
 
     body = "Nội dung bài báo dài. " * 20
     source = "Skip to content\n" + body + "\nEmail *\n"
@@ -139,7 +139,7 @@ def test_corpus_aware_repeated_ui_keeps_article_content():
 
 
 def test_corpus_aware_preserves_references():
-    from vietnamese_topic_classification.data.silver.corpus_v2 import build_corpus_stats
+    from vietnamese_topic_classification.data.silver.v2.corpus import build_corpus_stats
 
     source = "Tài liệu tham khảo\n" + "Nội dung chính. " * 30 + "\nKết luận"
     corpus = build_corpus_stats([{"text": source}] * 4, min_document_frequency=2)
@@ -169,8 +169,8 @@ def test_silver_v2_output_paths_are_versioned(tmp_path):
     paths = pipeline.planned_paths(reader.verify()["sha256"])
     assert paths["silver"].parent == tmp_path / "02_silver" / "v2"
     assert paths["rejected"].parent == tmp_path / "02_silver" / "v2"
-    assert paths["audit"].parent == tmp_path / "05_reports" / "silver" / "v2"
-    assert paths["report"].parent == tmp_path / "05_reports" / "silver" / "v2"
+    assert paths["audit"].parent == tmp_path / "04_reports" / "silver" / "v2"
+    assert paths["report"].parent == tmp_path / "04_reports" / "silver" / "v2"
 
 
 def test_silver_reader_supports_moved_legacy_v2_snapshot(tmp_path):
@@ -180,7 +180,7 @@ def test_silver_reader_supports_moved_legacy_v2_snapshot(tmp_path):
     report = json.loads(reader.report_path.read_text())
     report["pipeline_version"] = "v2"
     new_silver = tmp_path / "02_silver" / "v2"
-    new_report = tmp_path / "05_reports" / "silver" / "v2"
+    new_report = tmp_path / "04_reports" / "silver" / "v2"
     new_silver.mkdir(parents=True)
     new_report.mkdir(parents=True)
     source.rename(new_silver / source.name)
@@ -207,7 +207,7 @@ def test_silver_reader_handles_partial_v2_drive_migration(tmp_path):
 
 def test_silver_reader_rejects_ambiguous_quality_report(tmp_path):
     reader = make_reader(tmp_path, ["Một văn bản ngắn nhưng đúng cấu trúc. " * 8])
-    nested = tmp_path / "05_reports" / "silver" / "v2"
+    nested = tmp_path / "04_reports" / "silver" / "v2"
     nested.mkdir(parents=True)
     (nested / "v1.json").write_bytes(reader.report_path.read_bytes())
     from vietnamese_topic_classification.data.silver.exceptions import SilverReportError

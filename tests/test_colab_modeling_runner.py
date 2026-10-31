@@ -21,9 +21,9 @@ def test_colab_modeling_runner_contract():
 
     source = "\n".join(cell["source"] for cell in code_cells)
     for required in (
-        'BRANCH = "feat/modeling-diagnostics-v1"',
+        'BRANCH = __import__("os").environ.get("VTC_GIT_REF", "main")',
         'DATA_LAKE_ROOT',
-        '"04_gold"',
+        '"03_gold"',
         'GoldReader(',
         'reader.verify()',
         '"--data-lake-root"',
@@ -48,5 +48,5 @@ def test_colab_modeling_runner_contract():
         assert required in source
     assert "scripts/07_evaluate_model.py" not in source
     assert 'iter_split("test")' not in source
-    assert '"03_gold"' not in source
+    assert '"04_gold"' not in source
     assert '01_ingest_bronze.py' not in source

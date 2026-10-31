@@ -52,7 +52,7 @@ invalid Bronze manifests and publication failures can stop the pipeline.
 
 ## 3. Output contracts
 
-### Accepted row (`02_silver/vtsnlp_silver_v1_*.jsonl`)
+### Accepted row (`02_silver/v1/vtsnlp_silver_v1_*.jsonl`)
 
 | Field | Meaning |
 | --- | --- |
@@ -63,7 +63,7 @@ invalid Bronze manifests and publication failures can stop the pipeline.
 | `source_snapshot` | Name of the source Bronze JSONL file |
 | `quality_flags` | Empty list in V1 (no per-record heuristics implemented yet) |
 
-### Rejected row (`02_silver/vtsnlp_rejected_v1_*.jsonl`)
+### Rejected row (`02_silver/v1/vtsnlp_rejected_v1_*.jsonl`)
 
 | Field | Meaning |
 | --- | --- |
@@ -72,7 +72,7 @@ invalid Bronze manifests and publication failures can stop the pipeline.
 | `source_line` | 1-based source record position |
 | `source_snapshot` | Bronze file from which the row came |
 
-### Quality report (`05_reports/silver_quality_v1_*.json`)
+### Quality report (`04_reports/silver/v1/silver_quality_v1_*.json`)
 
 Contains `input_rows`, `accepted_rows`, `rejected_rows`, `rejection_reasons`,
 `accepted_domain_counts`, text-length **min/max/mean**, source manifest name and checksum,
@@ -135,7 +135,7 @@ DATA_LAKE_ROOT/
 ├── 02_silver/
 │   ├── vtsnlp_silver_v1_...jsonl         (accepted)
 │   └── vtsnlp_rejected_v1_...jsonl       (rejected)
-└── 05_reports/
+└── 04_reports/
     └── silver_quality_v1_...json        (audit report)
 ```
 
@@ -171,7 +171,7 @@ python scripts/03_read_silver.py \
   --limit 3
 ```
 
-Use the actual report filename in `05_reports/`. The command only verifies and previews
+Use the actual report filename in `04_reports/`. The command only verifies and previews
 the accepted Silver rows; it does not re-run Silver, read rejected records, or modify artifacts.
 For code usage:
 
@@ -188,7 +188,7 @@ for record in reader.iter_records():
 ## Shared Reader interface
 
 `BronzeReader` and `SilverReader` both accept `(data_lake_root, metadata_name)`. Bronze resolves
-the name under `00_source_metadata/`, while Silver resolves it under `05_reports/`. This
+the name under `00_source_metadata/`, while Silver resolves it under `04_reports/`. This
 unifies the Python API without changing already-published snapshots.
 
 To run the shared read-only smoke check:
@@ -199,3 +199,10 @@ python -m vietnamese_topic_classification.data.main \
   --metadata-name silver_quality_v1_b81fcce589_seed42_buf10000_n50000.json \
   --limit 3
 ```
+
+
+## Versioned source and Data Lake
+
+Canonical code: `silver/v1/{model,validator,transformer,pipeline}.py`; `silver/v2/{model,corpus,cleaner,pipeline}.py`. Shared: `silver/{reader,exceptions}.py`. Legacy root-level implementation modules have been deleted. Import the canonical `silver.v1` or `silver.v2` modules; `SilverReader` remains shared at `silver.reader`.
+
+Existing flat reports and snapshots remain readable during migration; new snapshots are written to matching version directories.

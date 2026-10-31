@@ -29,8 +29,8 @@ def write_silver(root, metadata_name=REPORT_NAME):
     (root / "02_silver").mkdir(exist_ok=True)
     payload = b'{"id":"a","text":"hello","domain":"News","text_length":5}\n'
     (root / "02_silver" / "clean.jsonl").write_bytes(payload)
-    (root / "05_reports").mkdir(exist_ok=True)
-    (root / "05_reports" / metadata_name).write_text(json.dumps({
+    (root / "04_reports").mkdir(exist_ok=True)
+    (root / "04_reports" / metadata_name).write_text(json.dumps({
         "output_files": {"silver": "clean.jsonl"},
         "silver_sha256": hashlib.sha256(payload).hexdigest(),
         "accepted_rows": 1,
@@ -78,8 +78,8 @@ def test_generic_main_silver(tmp_path, capsys):
 def test_generic_reader_handles_empty_silver(tmp_path, capsys):
     (tmp_path / "02_silver").mkdir()
     (tmp_path / "02_silver" / "clean.jsonl").write_bytes(b"")
-    (tmp_path / "05_reports").mkdir()
-    (tmp_path / "05_reports" / "quality.json").write_text(json.dumps({
+    (tmp_path / "04_reports").mkdir()
+    (tmp_path / "04_reports" / "quality.json").write_text(json.dumps({
         "output_files": {"silver": "clean.jsonl"},
         "silver_sha256": hashlib.sha256(b"").hexdigest(),
         "accepted_rows": 0,

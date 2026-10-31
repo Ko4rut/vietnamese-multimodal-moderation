@@ -8,17 +8,18 @@ from .exceptions import (
     SilverPublicationError,
     SilverReportError,
 )
-from .model import (
+from .reader import SilverReader
+from .v1.model import (
     SilverPublishedReport,
     SilverQualityReport,
     SilverRecord,
     SilverRejectedRecord,
     SilverRunResult,
+    ValidationResult,
 )
-from .pipeline import SilverPipeline
-from .reader import SilverReader
-from .transformer import SilverTransformer
-from .validator import SilverValidator, ValidationResult
+from .v1.pipeline import SilverPipeline
+from .v1.transformer import SilverTransformer
+from .v1.validator import SilverValidator
 
 __all__ = [
     "SilverRecord",

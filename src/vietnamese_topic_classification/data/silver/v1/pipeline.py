@@ -13,14 +13,14 @@ from typing import Any
 
 from vietnamese_topic_classification.data.bronze import BronzeReader
 from vietnamese_topic_classification.data.silver.exceptions import SilverPublicationError
-from vietnamese_topic_classification.data.silver.model import (
+from vietnamese_topic_classification.data.silver.v1.model import (
     SilverPublishedReport,
     SilverRecord,
     SilverRejectedRecord,
     SilverRunResult,
 )
-from vietnamese_topic_classification.data.silver.transformer import SilverTransformer
-from vietnamese_topic_classification.data.silver.validator import SilverValidator
+from vietnamese_topic_classification.data.silver.v1.transformer import SilverTransformer
+from vietnamese_topic_classification.data.silver.v1.validator import SilverValidator
 
 SILVER_VERSION = "v1"
 
@@ -69,16 +69,29 @@ class SilverPipeline:
         self.validator = validator if validator is not None else SilverValidator()
         self.transformer = transformer if transformer is not None else SilverTransformer()
 
-    def run(self) -> SilverRunResult:
-        """Verify source, write accepted/rejected JSONL and publish an audit report."""
+    def planned_paths(self) -> dict[str, Path]:
+        """Calculate versioned V1 artifact paths without publishing."""
         source_name = self.reader.data_path.stem
         suffix = source_name.removeprefix("vtsnlp_raw_sample_")
-        output = {
-            "silver": self.root / "02_silver" / f"vtsnlp_silver_{SILVER_VERSION}_{suffix}.jsonl",
-            "rejected": self.root / "02_silver" / f"vtsnlp_rejected_{SILVER_VERSION}_{suffix}.jsonl",
-            "report": self.root / "05_reports" / f"silver_quality_{SILVER_VERSION}_{suffix}.json",
+        return {
+            "silver": self.root / "02_silver" / SILVER_VERSION
+            / f"vtsnlp_silver_{SILVER_VERSION}_{suffix}.jsonl",
+            "rejected": self.root / "02_silver" / SILVER_VERSION
+            / f"vtsnlp_rejected_{SILVER_VERSION}_{suffix}.jsonl",
+            "report": self.root / "04_reports" / "silver" / SILVER_VERSION
+            / f"silver_quality_{SILVER_VERSION}_{suffix}.json",
         }
-        if any(path.exists() or path.with_name(path.name + ".uploading").exists() for path in output.values()):
+
+    def run(self) -> SilverRunResult:
+        """Verify source, write accepted/rejected JSONL and publish an audit report."""
+        output = self.planned_paths()
+        legacy_paths = [
+            self.root / "02_silver" / output["silver"].name,
+            self.root / "02_silver" / output["rejected"].name,
+            self.root / "04_reports" / output["report"].name,
+        ]
+        if any(path.exists() or path.with_name(path.name + ".uploading").exists()
+               for path in (*output.values(), *legacy_paths)):
             raise SilverPublicationError("Silver snapshot already exists or has stale upload files")
 
         verification = self.reader.verify()

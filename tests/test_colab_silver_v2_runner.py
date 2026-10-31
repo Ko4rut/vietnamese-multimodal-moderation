@@ -23,12 +23,12 @@ def test_colab_silver_v2_runner_import_and_execution_contract():
 
     setup = next(cell["source"] for cell in code_cells if cell["id"] == "setup")
     preflight = next(cell["source"] for cell in code_cells if cell["id"] == "preflight")
-    assert 'BRANCH = "feat/silver-v2-boilerplate-cleaning"' in setup
+    assert 'BRANCH = __import__("os").environ.get("VTC_GIT_REF", "main")' in setup
     assert '"pip", "install", "-q", "-e", "."' in setup
     for source in (setup, preflight):
         assert '(PROJECT_DIR / "src").resolve()' in source
         assert 'sys.path.insert(0, str(SRC_DIR))' in source
-        assert "from vietnamese_topic_classification.data.silver.pipeline_v2" in source
+        assert "from vietnamese_topic_classification.data.silver.v2.pipeline" in source
     assert "importlib.invalidate_caches()" in setup
     source = "\n".join(cell["source"] for cell in code_cells)
     assert "SilverReader(" in source
@@ -47,11 +47,12 @@ def test_colab_silver_v2_clears_stale_project_modules_before_import():
     assert 'name.startswith(PREFIX + ".")' in setup
     assert "del sys.modules[module_name]" in setup
     assert setup.index("del sys.modules[module_name]") < setup.index(
-        "from vietnamese_topic_classification.data.silver.cleaner_v2"
+        "from vietnamese_topic_classification.data.silver.v2.cleaner"
     )
     assert 'EXPECTED_RULESET = "silver-v2-corpus-aware-v1"' in setup
     assert 'inspect.signature(SilverV2Cleaner.clean)' in setup
     assert "actual_cleaner_path" in setup
+    assert '/silver/v2/cleaner.py"' in setup
     assert "rev-parse" in setup
 
     qa = by_id["review-examples"]

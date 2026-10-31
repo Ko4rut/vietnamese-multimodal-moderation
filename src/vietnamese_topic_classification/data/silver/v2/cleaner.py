@@ -10,8 +10,8 @@ import re
 from dataclasses import dataclass
 from typing import Literal
 
-from .corpus_v2 import CorpusV2Stats
-from .model_v2 import SilverV2CleaningDecision
+from .corpus import CorpusV2Stats
+from .model import SilverV2CleaningDecision
 
 RULESET_VERSION = "silver-v2-corpus-aware-v1"
 
