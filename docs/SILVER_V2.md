@@ -107,3 +107,8 @@ the reader raises an ambiguity error instead of silently picking a report.
 
 The output is still write-once. The pipeline publishes new Silver V2 files
 under these directories and never overwrites earlier V2 artifacts.
+
+
+## Canonical Silver source layout
+
+All Silver V1 implementation files are now in `src/vietnamese_topic_classification/data/silver/v1/` and V2 in `.../silver/v2/`. Common `SilverReader` and exception types stay in `silver/`. Existing root-level module imports are compatibility shims, so old scripts continue to work. Versioned Drive layout: `02_silver/v1/`, `02_silver/v2/`, `05_reports/silver/v1/`, `05_reports/silver/v2/`.

@@ -199,3 +199,10 @@ python -m vietnamese_topic_classification.data.main \
   --metadata-name silver_quality_v1_b81fcce589_seed42_buf10000_n50000.json \
   --limit 3
 ```
+
+
+## Versioned source and Data Lake
+
+Canonical code: `silver/v1/{model,validator,transformer,pipeline}.py`; `silver/v2/{model,corpus,cleaner,pipeline}.py`. Shared: `silver/{reader,exceptions}.py`. Root-level V1/V2 modules are import-compatibility shims only.
+
+Existing flat reports and snapshots remain readable during migration; new snapshots are written to matching version directories.
