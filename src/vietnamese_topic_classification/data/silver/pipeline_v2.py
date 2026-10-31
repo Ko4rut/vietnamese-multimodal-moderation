@@ -81,10 +81,14 @@ class SilverV2Pipeline:
         ).hexdigest()[:10]
         suffix = f"{source_sha256[:12]}_{config_hash}"
         return {
-            "silver": self.root / "02_silver" / f"vtsnlp_silver_{VERSION}_{suffix}.jsonl",
-            "rejected": self.root / "02_silver" / f"vtsnlp_rejected_{VERSION}_{suffix}.jsonl",
-            "audit": self.root / "05_reports" / f"silver_audit_{VERSION}_{suffix}.jsonl",
-            "report": self.root / "05_reports" / f"silver_quality_{VERSION}_{suffix}.json",
+            "silver": self.root / "02_silver" / VERSION
+            / f"vtsnlp_silver_{VERSION}_{suffix}.jsonl",
+            "rejected": self.root / "02_silver" / VERSION
+            / f"vtsnlp_rejected_{VERSION}_{suffix}.jsonl",
+            "audit": self.root / "05_reports" / "silver" / VERSION
+            / f"silver_audit_{VERSION}_{suffix}.jsonl",
+            "report": self.root / "05_reports" / "silver" / VERSION
+            / f"silver_quality_{VERSION}_{suffix}.json",
         }
 
     def run(self, *, dry_run: bool = False) -> SilverV2RunResult:

@@ -161,3 +161,56 @@ def test_v2_pipeline_corpus_prepass_removes_ui_from_published_text(tmp_path):
     assert result["report"]["cleaned_rows"] == 25
     assert result["report"]["accepted_rows"] == 1
     assert result["report"]["rejected_rows"] == 24
+
+
+def test_silver_v2_output_paths_are_versioned(tmp_path):
+    reader = make_reader(tmp_path, ["Đây là văn bản tin tức hợp lệ. " * 20])
+    pipeline = SilverV2Pipeline(reader)
+    paths = pipeline.planned_paths(reader.verify()["sha256"])
+    assert paths["silver"].parent == tmp_path / "02_silver" / "v2"
+    assert paths["rejected"].parent == tmp_path / "02_silver" / "v2"
+    assert paths["audit"].parent == tmp_path / "05_reports" / "silver" / "v2"
+    assert paths["report"].parent == tmp_path / "05_reports" / "silver" / "v2"
+
+
+def test_silver_reader_supports_moved_legacy_v2_snapshot(tmp_path):
+    text = "Văn bản được giữ nguyên. " * 20
+    reader = make_reader(tmp_path, [text])
+    source = reader.data_path
+    report = json.loads(reader.report_path.read_text())
+    report["pipeline_version"] = "v2"
+    new_silver = tmp_path / "02_silver" / "v2"
+    new_report = tmp_path / "05_reports" / "silver" / "v2"
+    new_silver.mkdir(parents=True)
+    new_report.mkdir(parents=True)
+    source.rename(new_silver / source.name)
+    reader.report_path.unlink()
+    (new_report / "v1.json").write_text(json.dumps(report), encoding="utf-8")
+
+    restored = SilverReader(tmp_path, "v1.json")
+    assert restored.verify()["records"] == 1
+    assert list(restored.iter_records())[0]["text"] == text
+
+
+def test_silver_reader_handles_partial_v2_drive_migration(tmp_path):
+    text = "Văn bản bài viết được bảo toàn. " * 20
+    reader = make_reader(tmp_path, [text])
+    report = json.loads(reader.report_path.read_text())
+    report["pipeline_version"] = "v2"
+    reader.report_path.write_text(json.dumps(report))
+    data_dir = tmp_path / "02_silver" / "v2"
+    data_dir.mkdir()
+    reader.data_path.rename(data_dir / reader.data_path.name)
+
+    assert SilverReader(tmp_path, "v1.json").verify()["records"] == 1
+
+
+def test_silver_reader_rejects_ambiguous_quality_report(tmp_path):
+    reader = make_reader(tmp_path, ["Một văn bản ngắn nhưng đúng cấu trúc. " * 8])
+    nested = tmp_path / "05_reports" / "silver" / "v2"
+    nested.mkdir(parents=True)
+    (nested / "v1.json").write_bytes(reader.report_path.read_bytes())
+    from vietnamese_topic_classification.data.silver.exceptions import SilverReportError
+
+    with pytest.raises(SilverReportError, match="Ambiguous"):
+        SilverReader(tmp_path, "v1.json")

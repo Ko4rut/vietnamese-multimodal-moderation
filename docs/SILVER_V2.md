@@ -77,3 +77,33 @@ The new ruleset fingerprint is `silver-v2-corpus-aware-v1`, ensuring an
 immutable output filename different from already published V2 artifacts.
 The quality report includes corpus size and repeated UI block counts.
 No extra libraries, paid APIs, labeling, or ML training are needed.
+
+
+## Drive layout: versioned Silver V2
+
+After version organization, Silver V1 keeps its original flat locations
+while all Silver V2 snapshots are stored together by version:
+
+```text
+02_silver/
+  vtsnlp_silver_v1_*.jsonl
+  vtsnlp_rejected_v1_*.jsonl
+  v2/
+    vtsnlp_silver_v2_*.jsonl
+    vtsnlp_rejected_v2_*.jsonl
+05_reports/
+  silver_quality_v1_*.json
+  silver/
+    v2/
+      silver_quality_v2_*.json
+      silver_audit_v2_*.jsonl
+```
+
+`SilverReader(root, report_filename)` supports both flat legacy and
+versioned V2 locations, including a partially migrated Drive directory.
+No change to a manifest's `output_files` basenames or the SHA256 contents
+is necessary. If duplicate quality-report filenames appear in both layouts,
+the reader raises an ambiguity error instead of silently picking a report.
+
+The output is still write-once. The pipeline publishes new Silver V2 files
+under these directories and never overwrites earlier V2 artifacts.

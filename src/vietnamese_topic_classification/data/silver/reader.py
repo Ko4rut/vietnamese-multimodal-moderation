@@ -31,7 +31,19 @@ class SilverReader(BaseReader):
         if not self.is_safe_metadata_name(metadata_name):
             raise SilverReportError("metadata_name must be a JSON filename, not a path")
         super().__init__(data_lake_root, metadata_name)
-        self.report_path = self.root / "05_reports" / self.metadata_name
+        # V1 and legacy V2 reports were published flat. New V2 reports have
+        # their own version directory; accept both without changing callers.
+        reports_root = self.root / "05_reports"
+        candidates = [
+            reports_root / self.metadata_name,
+            reports_root / "silver" / "v2" / self.metadata_name,
+        ]
+        existing = [path for path in candidates if path.is_file()]
+        if len(existing) > 1:
+            raise SilverReportError(
+                f"Ambiguous Silver report in multiple locations: {self.metadata_name}"
+            )
+        self.report_path = existing[0] if existing else candidates[0]
 
         try:
             with self.report_path.open("r", encoding="utf-8") as handle:
@@ -63,7 +75,21 @@ class SilverReader(BaseReader):
             raise SilverReportError("Invalid accepted_rows in quality report")
 
         self.report: SilverQualityReport = cast(SilverQualityReport, report)
-        self.data_path = self.root / "02_silver" / file_name
+        data_root = self.root / "02_silver"
+        if report.get("pipeline_version") == "v2":
+            # During migration the data and report may temporarily be in
+            # different directories. Prefer the matching layout, fall back
+            # only when the expected file does not exist.
+            if self.report_path.parent.name == "v2":
+                data_candidates = [data_root / "v2" / file_name, data_root / file_name]
+            else:
+                data_candidates = [data_root / file_name, data_root / "v2" / file_name]
+        else:
+            data_candidates = [data_root / file_name]
+        self.data_path = next(
+            (candidate for candidate in data_candidates if candidate.is_file()),
+            data_candidates[0],
+        )
         if not self.data_path.is_file():
             raise SilverFileNotFoundError(f"Silver snapshot not found: {self.data_path}")
 
