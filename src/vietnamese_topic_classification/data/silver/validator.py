@@ -1,8 +1,9 @@
-"""Compatibility exports for versioned Silver modules."""
+"""Exports for versioned Silver modules."""
 
-from .v1.model import (
-    ValidationResult as ValidationResult,
-)
-from .v1.validator import (
-    SilverValidator as SilverValidator,
-)
+from .v1.model import ValidationResult
+from .v1.validator import SilverValidator
+
+__all__ = [
+    "ValidationResult",
+    "SilverValidator",
+]

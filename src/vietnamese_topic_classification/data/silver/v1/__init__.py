@@ -1,20 +1,26 @@
-"""Compatibility exports for versioned Silver modules."""
+"""Exports for versioned Silver modules."""
 
 from .model import (
-    SilverPublishedReport as SilverPublishedReport,
-    SilverQualityReport as SilverQualityReport,
-    SilverRecord as SilverRecord,
-    SilverRejectedRecord as SilverRejectedRecord,
-    SilverRunResult as SilverRunResult,
-    ValidationResult as ValidationResult,
+    SilverPublishedReport,
+    SilverQualityReport,
+    SilverRecord,
+    SilverRejectedRecord,
+    SilverRunResult,
+    ValidationResult,
 )
-from .pipeline import (
-    SILVER_VERSION as SILVER_VERSION,
-    SilverPipeline as SilverPipeline,
-)
-from .transformer import (
-    SilverTransformer as SilverTransformer,
-)
-from .validator import (
-    SilverValidator as SilverValidator,
-)
+from .pipeline import SILVER_VERSION, SilverPipeline
+from .transformer import SilverTransformer
+from .validator import SilverValidator
+
+__all__ = [
+    "SilverPublishedReport",
+    "SilverQualityReport",
+    "SilverRecord",
+    "SilverRejectedRecord",
+    "SilverRunResult",
+    "ValidationResult",
+    "SILVER_VERSION",
+    "SilverPipeline",
+    "SilverTransformer",
+    "SilverValidator",
+]

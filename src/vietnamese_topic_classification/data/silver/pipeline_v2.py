@@ -1,6 +1,8 @@
-"""Compatibility exports for versioned Silver modules."""
+"""Exports for versioned Silver modules."""
 
-from .v2.pipeline import (
-    SilverV2Pipeline as SilverV2Pipeline,
-    VERSION as VERSION,
-)
+from .v2.pipeline import SilverV2Pipeline, VERSION
+
+__all__ = [
+    "SilverV2Pipeline",
+    "VERSION",
+]
