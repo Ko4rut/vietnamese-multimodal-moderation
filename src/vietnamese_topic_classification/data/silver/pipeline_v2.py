@@ -1,2 +1,6 @@
-"""Legacy V2 pipeline import."""
-from .v2.pipeline import VERSION, SilverV2Pipeline
+"""Compatibility exports for versioned Silver modules."""
+
+from .v2.pipeline import (
+    SilverV2Pipeline as SilverV2Pipeline,
+    VERSION as VERSION,
+)
