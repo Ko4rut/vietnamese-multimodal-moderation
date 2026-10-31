@@ -14,7 +14,7 @@ from .model import (
     SilverV2Report,
     SilverV2RunResult,
 )
-from .pipeline import SilverV2Pipeline, VERSION
+from .pipeline import VERSION, SilverV2Pipeline
 
 __all__ = [
     "RULESET_VERSION",

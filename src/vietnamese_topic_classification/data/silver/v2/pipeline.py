@@ -12,12 +12,12 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, TextIO
 
+from ..exceptions import SilverPublicationError
+from ..reader import SilverReader
+from ..v1.model import SilverRecord
 from .cleaner import RULESET_VERSION, SilverV2Cleaner
 from .corpus import build_corpus_stats
-from ..exceptions import SilverPublicationError
-from ..v1.model import SilverRecord
 from .model import SilverV2AuditRow, SilverV2Report, SilverV2RunResult
-from ..reader import SilverReader
 
 VERSION = "v2"
 
