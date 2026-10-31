@@ -6,8 +6,8 @@ import json
 from pathlib import Path
 
 import pytest
-
 from test_gold_v2 import _published_source
+
 from vietnamese_topic_classification.data.gold import GoldReader, GoldV2Pipeline
 from vietnamese_topic_classification.training import (
     ClassifierConfig,
