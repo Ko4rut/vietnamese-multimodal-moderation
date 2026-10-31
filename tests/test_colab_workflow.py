@@ -15,6 +15,7 @@ NOTEBOOKS = [
     "v1/colab_runner.ipynb",
     "v1/colab_silver_runner.ipynb",
     "v2/colab_silver_v2_runner.ipynb",
+    "v2/colab_gold_v2_runner.ipynb",
     "v1/colab_gold_runner.ipynb",
     "v1/colab_modeling_runner.ipynb",
     "v2/colab_data_lake_end_to_end.ipynb",

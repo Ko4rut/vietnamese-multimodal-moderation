@@ -1,4 +1,4 @@
-"""Gold V1: deterministic, leakage-aware ML-ready dataset snapshots."""
+"""Gold V1/V2: deterministic, leakage-aware ML-ready dataset snapshots."""
 
 from .config import GoldConfig
 from .exceptions import (
@@ -22,6 +22,7 @@ from .model import (
 from .pipeline import GoldPipeline
 from .reader import GoldReader
 from .splitter import GoldSplitter
+from .v2 import GoldV2Pipeline
 from .validator import GoldValidator
 
 __all__ = [
@@ -41,6 +42,7 @@ __all__ = [
     "GoldPublicationError",
     "GoldValidationError",
     "GoldPipeline",
+    "GoldV2Pipeline",
     "GoldReader",
     "GoldSplitter",
     "GoldValidator",

@@ -100,3 +100,7 @@ checksums, row counts, label mapping and cross-split IDs.
 The notebook refuses to rebuild Gold if files or stale `.uploading` artifacts
 already exist. Gold only needs CPU; no Hugging Face redownload or GPU is required.
 The full 50K near-duplicate candidate scan may need substantial time/RAM.
+
+## Gold V2
+
+Gold V2 is implemented separately as `GoldV2Pipeline`, which reuses the validated V1 splitting algorithm while enforcing complete Silver V2 lineage. Output files and manifests live in `03_gold/v2/`, reports in `04_reports/gold/v2/`. The shared `GoldReader` resolves V2 manifest names automatically. See [Gold V2 guide](../../../../docs/GOLD_V2.md) and [Colab V2 runner](../../../../notebooks/v2/colab_gold_v2_runner.ipynb).
