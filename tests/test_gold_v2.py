@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 
 import pytest
+from test_gold import _silver
 
 from vietnamese_topic_classification.config import get_domain_labels
 from vietnamese_topic_classification.data.gold import (
@@ -15,8 +16,6 @@ from vietnamese_topic_classification.data.gold import (
 )
 from vietnamese_topic_classification.data.silver import SilverReader
 from vietnamese_topic_classification.data.silver.v2.pipeline import SilverV2Pipeline
-
-from test_gold import _silver
 
 
 def _published_source(tmp_path: Path) -> SilverReader:

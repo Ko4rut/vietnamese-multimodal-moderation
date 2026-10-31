@@ -90,3 +90,7 @@ Moving notebooks does **not** move or rename the Google Drive data snapshots; V1
 ## Gold V2
 
 The separate Gold V2 pipeline reads a **complete, published Silver V2 snapshot** and writes immutable Gold V2 splits to `03_gold/v2/`, with reports under `04_reports/gold/v2/`. It checks the Silver V2 accepted/rejected/audit files and SHA256 lineage to Silver V1. No V1 snapshots are overwritten. See [Gold V2 guide](docs/GOLD_V2.md) and [Gold V2 Colab runner](notebooks/v2/colab_gold_v2_runner.ipynb).
+
+## Modeling V2 — retrain, never reuse V1 model
+
+Use [Modeling V2 on Colab](notebooks/v2/colab_modeling_runner.ipynb) after Gold V2 has been published and verified. The notebook reuses the existing TF-IDF + Logistic Regression/LinearSVC factory and CLI, but fits new parameters from `03_gold/v2/manifests/` and publishes isolated artifacts in `experiments/tfidf_baselines_v2/`. Validation Macro-F1 is used for selection; test is held out. See [the Modeling guide](docs/COLAB_MODELING.md). A V1/V2 score delta alone does not isolate the cleaning effect because the Gold splits may differ.
