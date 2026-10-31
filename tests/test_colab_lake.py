@@ -1,7 +1,5 @@
 """Offline tests for collaborator-specific Google Drive path resolution."""
 
-from pathlib import Path
-
 import pytest
 
 from vietnamese_topic_classification.data.colab_lake import (

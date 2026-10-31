@@ -10,8 +10,7 @@ import pytest
 from vietnamese_topic_classification.data.silver import SilverPipeline, SilverReader
 from vietnamese_topic_classification.data.silver.exceptions import SilverReportError
 from vietnamese_topic_classification.data.silver.v1 import SilverPipeline as V1Pipeline
-from vietnamese_topic_classification.data.silver.v2 import SilverV2Cleaner
-from vietnamese_topic_classification.data.silver.v2 import SilverV2Pipeline
+from vietnamese_topic_classification.data.silver.v2 import SilverV2Cleaner, SilverV2Pipeline
 
 
 def _write_versioned(root, version: str, *, legacy: bool = False):

@@ -5,8 +5,8 @@ import json
 import pytest
 
 from vietnamese_topic_classification.data.silver import SilverReader
-from vietnamese_topic_classification.data.silver.v2.cleaner import SilverV2Cleaner
 from vietnamese_topic_classification.data.silver.exceptions import SilverPublicationError
+from vietnamese_topic_classification.data.silver.v2.cleaner import SilverV2Cleaner
 from vietnamese_topic_classification.data.silver.v2.pipeline import SilverV2Pipeline
 
 
