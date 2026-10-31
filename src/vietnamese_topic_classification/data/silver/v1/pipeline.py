@@ -69,15 +69,22 @@ class SilverPipeline:
         self.validator = validator if validator is not None else SilverValidator()
         self.transformer = transformer if transformer is not None else SilverTransformer()
 
-    def run(self) -> SilverRunResult:
-        """Verify source, write accepted/rejected JSONL and publish an audit report."""
+    def planned_paths(self) -> dict[str, Path]:
+        """Calculate versioned V1 artifact paths without publishing."""
         source_name = self.reader.data_path.stem
         suffix = source_name.removeprefix("vtsnlp_raw_sample_")
-        output = {
-            "silver": self.root / "02_silver" / SILVER_VERSION / f"vtsnlp_silver_{SILVER_VERSION}_{suffix}.jsonl",
-            "rejected": self.root / "02_silver" / SILVER_VERSION / f"vtsnlp_rejected_{SILVER_VERSION}_{suffix}.jsonl",
-            "report": self.root / "05_reports" / "silver" / SILVER_VERSION / f"silver_quality_{SILVER_VERSION}_{suffix}.json",
+        return {
+            "silver": self.root / "02_silver" / SILVER_VERSION
+            / f"vtsnlp_silver_{SILVER_VERSION}_{suffix}.jsonl",
+            "rejected": self.root / "02_silver" / SILVER_VERSION
+            / f"vtsnlp_rejected_{SILVER_VERSION}_{suffix}.jsonl",
+            "report": self.root / "05_reports" / "silver" / SILVER_VERSION
+            / f"silver_quality_{SILVER_VERSION}_{suffix}.json",
         }
+
+    def run(self) -> SilverRunResult:
+        """Verify source, write accepted/rejected JSONL and publish an audit report."""
+        output = self.planned_paths()
         legacy_paths = [
             self.root / "02_silver" / output["silver"].name,
             self.root / "02_silver" / output["rejected"].name,
