@@ -52,6 +52,7 @@ def test_colab_silver_v2_clears_stale_project_modules_before_import():
     assert 'EXPECTED_RULESET = "silver-v2-corpus-aware-v1"' in setup
     assert 'inspect.signature(SilverV2Cleaner.clean)' in setup
     assert "actual_cleaner_path" in setup
+    assert '/silver/v2/cleaner.py"' in setup
     assert "rev-parse" in setup
 
     qa = by_id["review-examples"]
