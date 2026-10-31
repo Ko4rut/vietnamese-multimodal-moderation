@@ -68,13 +68,21 @@ The existing Drive folder may still be named `vietnamese-multilabel-topic-classi
 
 The earlier 3K balanced Silver candidate file and multi-label annotation template are legacy exploration artifacts, **not** the intended 50K single-label baseline. Silver V1, Silver V2, Gold V1 and TF-IDF modeling are implemented; Silver snapshots on Drive are segregated by version.
 
-See [Silver V1 pipeline details](src/vietnamese_topic_classification/data/silver/README.md), [Colab Silver runner](notebooks/colab_silver_runner.ipynb), [architecture](docs/ARCHITECTURE.md) and [implementation plan](docs/IMPLEMENTATION_PLAN.md).
+See [Silver V1 pipeline details](src/vietnamese_topic_classification/data/silver/README.md), [Colab Silver runner](notebooks/v1/colab_silver_runner.ipynb), [architecture](docs/ARCHITECTURE.md) and [implementation plan](docs/IMPLEMENTATION_PLAN.md).
 
 
 ## Team onboarding: run Colab without rewriting the lake
 
-For colleagues, start with **[End-to-end Colab runner](notebooks/colab_data_lake_end_to_end.ipynb)** and **[Team setup guide](docs/COLAB_TEAM_SETUP.md)**. After the refactor PR is merged, the notebook fetches `main`, installs the project, mounts each user's Drive, verifies existing immutable data, processes missing Bronze/Silver V1/Gold snapshots, and runs Silver V2 as a dry-run. Publishing Silver V2 is explicitly opt-in.
+For colleagues, start with **[End-to-end Colab runner](notebooks/v2/colab_data_lake_end_to_end.ipynb)** and **[Team setup guide](docs/COLAB_TEAM_SETUP.md)**. After the refactor PR is merged, the notebook fetches `main`, installs the project, mounts each user's Drive, verifies existing immutable data, processes missing Bronze/Silver V1/Gold snapshots, and runs Silver V2 as a dry-run. Publishing Silver V2 is explicitly opt-in.
 
 **Required:** The data owner must share the Google Drive Data Lake folder with each collaborator; each user must authorize Colab's Drive mount. A GitHub clone cannot download private Drive data or mount the cloud folder onto a teammate's physical computer. Add a shortcut named `vietnamese-multilabel-topic-classification` to My Drive, or provide the real Colab-mounted `DATA_LAKE_ROOT`.
 
 Silver V1: `02_silver/v1/` and `04_reports/silver/v1/`. Silver V2: `02_silver/v2/` and `04_reports/silver/v2/`. Bronze and Gold retain their existing locations. No duplicate root-level Silver implementation modules remain.
+
+## Versioned Colab notebooks
+
+- [`notebooks/v1/colab_end_to_end_v1.ipynb`](notebooks/v1/colab_end_to_end_v1.ipynb): one run from pinned Bronze ingestion through Silver V1, Gold V1, and both TF-IDF baselines (no held-out test evaluation).
+- [`notebooks/v1/`](notebooks/v1/): separate Bronze, Silver V1, Gold V1, modeling and Silver V1 EDA notebooks.
+- [`notebooks/v2/`](notebooks/v2/): Silver V2 runner and the earlier optional V2 Data Lake workflow. No Gold V2 notebook is assumed to exist yet.
+
+Moving notebooks does **not** move or rename the Google Drive data snapshots; V1 experiments still use `experiments/tfidf_baselines_v1/`.

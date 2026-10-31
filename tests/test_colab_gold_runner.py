@@ -4,7 +4,7 @@ import ast
 import json
 from pathlib import Path
 
-NOTEBOOK = Path(__file__).resolve().parents[1] / "notebooks/colab_gold_runner.ipynb"
+NOTEBOOK = Path(__file__).resolve().parents[1] / "notebooks/v1/colab_gold_runner.ipynb"
 
 
 def test_gold_colab_runner_contract():

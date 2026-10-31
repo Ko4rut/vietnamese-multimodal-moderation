@@ -90,7 +90,7 @@ topic labels have been manually verified, or that crawl noise has been removed.
 
 ## Google Colab (existing Silver snapshot)
 
-Open [notebooks/colab_gold_runner.ipynb](../../../../notebooks/colab_gold_runner.ipynb)
+Open [notebooks/v1/colab_gold_runner.ipynb](../../../../notebooks/v1/colab_gold_runner.ipynb)
 using the `feat/gold-pipeline-v1` branch. The notebook clones the public repository,
 installs only the base package dependencies, mounts the correct Drive account,
 verifies Silver, checks deterministic Gold destination paths, runs the existing
