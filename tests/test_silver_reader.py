@@ -26,7 +26,7 @@ def make_silver(root, records=None, payload=None):
     silver = root / "02_silver"
     silver.mkdir()
     (silver / "silver.jsonl").write_bytes(payload)
-    reports = root / "05_reports"
+    reports = root / "04_reports"
     reports.mkdir()
     report = {
         "output_files": {"silver": "silver.jsonl", "rejected": "rejected.jsonl"},
@@ -60,7 +60,7 @@ def test_missing_and_bad_report(tmp_path):
     with pytest.raises(SilverReportError, match="quality report"):
         SilverReader(tmp_path, "missing.json")
     make_silver(tmp_path)
-    (tmp_path / "05_reports" / "quality.json").write_text("[1, 2]", encoding="utf-8")
+    (tmp_path / "04_reports" / "quality.json").write_text("[1, 2]", encoding="utf-8")
     with pytest.raises(SilverReportError, match="JSON object"):
         SilverReader(tmp_path, "quality.json")
 
@@ -75,7 +75,7 @@ def test_report_name_rejects_paths(tmp_path, bad_name):
 def test_report_rejects_unsafe_filename(tmp_path, bad_filename):
     report = make_silver(tmp_path)
     report["output_files"]["silver"] = bad_filename
-    (tmp_path / "05_reports" / "quality.json").write_text(json.dumps(report))
+    (tmp_path / "04_reports" / "quality.json").write_text(json.dumps(report))
     with pytest.raises(SilverReportError, match="filename"):
         SilverReader(tmp_path, "quality.json")
 
@@ -84,7 +84,7 @@ def test_report_field_validation(tmp_path):
     report = make_silver(tmp_path)
     for change in ({"accepted_rows": -1}, {"accepted_rows": True}, {"silver_sha256": "bad"}, {"output_files": []}):
         changed = {**report, **change}
-        (tmp_path / "05_reports" / "quality.json").write_text(json.dumps(changed))
+        (tmp_path / "04_reports" / "quality.json").write_text(json.dumps(changed))
         with pytest.raises(SilverReportError):
             SilverReader(tmp_path, "quality.json")
 
@@ -107,7 +107,7 @@ def test_checksum_mismatch(tmp_path):
 def test_count_mismatch(tmp_path):
     report = make_silver(tmp_path)
     report["accepted_rows"] = 2
-    (tmp_path / "05_reports" / "quality.json").write_text(json.dumps(report))
+    (tmp_path / "04_reports" / "quality.json").write_text(json.dumps(report))
     with pytest.raises(SilverIntegrityError, match="record count mismatch"):
         SilverReader(tmp_path, "quality.json").verify()
 

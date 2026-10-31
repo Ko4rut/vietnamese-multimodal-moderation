@@ -16,10 +16,10 @@ from vietnamese_topic_classification.data.silver.v2 import SilverV2Cleaner, Silv
 def _write_versioned(root, version: str, *, legacy: bool = False):
     payload = b'{"id":"1","text":"hello","domain":"News"}\n'
     data_dir = root / "02_silver" / version
-    report_dir = root / "05_reports" / "silver" / version
+    report_dir = root / "04_reports" / "silver" / version
     if legacy:
         data_dir = root / "02_silver"
-        report_dir = root / "05_reports"
+        report_dir = root / "04_reports"
     data_dir.mkdir(parents=True, exist_ok=True)
     report_dir.mkdir(parents=True, exist_ok=True)
     data_name = f"data_{version}.jsonl"
@@ -53,8 +53,8 @@ def test_reader_loads_legacy_and_versioned_layout(tmp_path, version, legacy):
 
 def test_reader_refuses_ambiguous_snapshot_locations(tmp_path):
     name = _write_versioned(tmp_path, "v1")
-    legacy = tmp_path / "05_reports" / name
-    legacy.write_bytes((tmp_path / "05_reports" / "silver" / "v1" / name).read_bytes())
+    legacy = tmp_path / "04_reports" / name
+    legacy.write_bytes((tmp_path / "04_reports" / "silver" / "v1" / name).read_bytes())
     with pytest.raises(SilverReportError, match="Ambiguous"):
         SilverReader(tmp_path, name)
 

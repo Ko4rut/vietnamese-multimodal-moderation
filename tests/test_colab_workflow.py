@@ -81,7 +81,7 @@ def test_gold_and_v2_reference_new_silver_report_layout():
         source = "\n".join(
             cell["source"] for cell in nb["cells"] if cell["cell_type"] == "code"
         )
-        assert '"05_reports" / "silver" / "v1"' in source
+        assert '"04_reports" / "silver" / "v1"' in source
     nb = json.loads((ROOT / "colab_silver_v2_runner.ipynb").read_text())
     source = "\n".join(cell["source"] for cell in nb["cells"] if cell["cell_type"] == "code")
     assert "from vietnamese_topic_classification.data.silver.v2.cleaner import" in source
