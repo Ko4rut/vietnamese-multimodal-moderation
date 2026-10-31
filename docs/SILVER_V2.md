@@ -36,13 +36,13 @@ python scripts/09_build_silver_v2.py \
   --report-name silver_quality_v1_b81fcce589_seed42_buf10000_n50000.json
 ```
 
-The dry-run does not write to Drive. A publishing run creates new **write-once** files under `02_silver/` and `05_reports/` with a suffix identifying the source checksum and cleaner configuration:
+The dry-run does not write to Drive. A publishing run creates new **write-once** files under `02_silver/v2/` and `05_reports/silver/v2/` with a suffix identifying the source checksum and cleaner configuration:
 
 ```text
-02_silver/vtsnlp_silver_v2_<source-hash>_<config-hash>.jsonl
-02_silver/vtsnlp_rejected_v2_<source-hash>_<config-hash>.jsonl
-05_reports/silver_audit_v2_<source-hash>_<config-hash>.jsonl
-05_reports/silver_quality_v2_<source-hash>_<config-hash>.json
+02_silver/v2/vtsnlp_silver_v2_<source-hash>_<config-hash>.jsonl
+02_silver/v2/vtsnlp_rejected_v2_<source-hash>_<config-hash>.jsonl
+05_reports/silver/v2/silver_audit_v2_<source-hash>_<config-hash>.jsonl
+05_reports/silver/v2/silver_quality_v2_<source-hash>_<config-hash>.json
 ```
 
 The report includes input/accepted/rejected counts, removed characters, signal counts, source SHA256 and three output SHA256 checksums; `SilverReader` can verify the published V2 output.
@@ -111,4 +111,4 @@ under these directories and never overwrites earlier V2 artifacts.
 
 ## Canonical Silver source layout
 
-All Silver V1 implementation files are now in `src/vietnamese_topic_classification/data/silver/v1/` and V2 in `.../silver/v2/`. Common `SilverReader` and exception types stay in `silver/`. Existing root-level module imports are compatibility shims, so old scripts continue to work. Versioned Drive layout: `02_silver/v1/`, `02_silver/v2/`, `05_reports/silver/v1/`, `05_reports/silver/v2/`.
+All Silver V1 implementation files are now in `src/vietnamese_topic_classification/data/silver/v1/` and V2 in `.../silver/v2/`. Common `SilverReader` and exception types stay in `silver/`. Root-level legacy modules were removed. All scripts and notebooks now import the canonical `silver.v1` and `silver.v2` packages; `silver.__init__` retains the shared entry points (`SilverReader`, `SilverPipeline`, and public exception/types). Versioned Drive layout: `02_silver/v1/`, `02_silver/v2/`, `05_reports/silver/v1/`, `05_reports/silver/v2/`.

@@ -52,7 +52,7 @@ invalid Bronze manifests and publication failures can stop the pipeline.
 
 ## 3. Output contracts
 
-### Accepted row (`02_silver/vtsnlp_silver_v1_*.jsonl`)
+### Accepted row (`02_silver/v1/vtsnlp_silver_v1_*.jsonl`)
 
 | Field | Meaning |
 | --- | --- |
@@ -63,7 +63,7 @@ invalid Bronze manifests and publication failures can stop the pipeline.
 | `source_snapshot` | Name of the source Bronze JSONL file |
 | `quality_flags` | Empty list in V1 (no per-record heuristics implemented yet) |
 
-### Rejected row (`02_silver/vtsnlp_rejected_v1_*.jsonl`)
+### Rejected row (`02_silver/v1/vtsnlp_rejected_v1_*.jsonl`)
 
 | Field | Meaning |
 | --- | --- |
@@ -72,7 +72,7 @@ invalid Bronze manifests and publication failures can stop the pipeline.
 | `source_line` | 1-based source record position |
 | `source_snapshot` | Bronze file from which the row came |
 
-### Quality report (`05_reports/silver_quality_v1_*.json`)
+### Quality report (`05_reports/silver/v1/silver_quality_v1_*.json`)
 
 Contains `input_rows`, `accepted_rows`, `rejected_rows`, `rejection_reasons`,
 `accepted_domain_counts`, text-length **min/max/mean**, source manifest name and checksum,
@@ -203,6 +203,6 @@ python -m vietnamese_topic_classification.data.main \
 
 ## Versioned source and Data Lake
 
-Canonical code: `silver/v1/{model,validator,transformer,pipeline}.py`; `silver/v2/{model,corpus,cleaner,pipeline}.py`. Shared: `silver/{reader,exceptions}.py`. Root-level V1/V2 modules are import-compatibility shims only.
+Canonical code: `silver/v1/{model,validator,transformer,pipeline}.py`; `silver/v2/{model,corpus,cleaner,pipeline}.py`. Shared: `silver/{reader,exceptions}.py`. Legacy root-level implementation modules have been deleted. Import the canonical `silver.v1` or `silver.v2` modules; `SilverReader` remains shared at `silver.reader`.
 
 Existing flat reports and snapshots remain readable during migration; new snapshots are written to matching version directories.
