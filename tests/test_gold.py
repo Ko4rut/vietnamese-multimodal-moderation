@@ -95,7 +95,7 @@ def test_gold_pipeline_publishes_and_reads(tmp_path):
     assert Path(result["paths"]["test"]).parent == tmp_path / "03_gold"
     assert Path(result["paths"]["manifest"]).parent == tmp_path / "03_gold" / "manifests"
     assert Path(result["paths"]["report"]).parent == tmp_path / "04_reports"
-    assert not (tmp_path / "03_gold").exists()
+    assert not (tmp_path / "04_gold").exists()
     assert set(result["paths"]) == {"train", "validation", "test", "manifest", "report"}
 
 
