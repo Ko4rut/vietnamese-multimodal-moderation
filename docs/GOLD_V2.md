@@ -41,3 +41,7 @@ python scripts/10_build_gold_v2.py \
 Open [`notebooks/v2/colab_gold_v2_runner.ipynb`](../notebooks/v2/colab_gold_v2_runner.ipynb). It clones the chosen branch (defaults to `main` after merging), mounts Drive, lists source Silver V2 reports, checks source completeness, and opts into Gold V2 build only when `PUBLISH_GOLD_V2=True`. No GPU required.
 
 **Modeling:** the existing modeling CLI consumes Gold manifest filenames through `GoldReader`, which now resolves V2 manifests in `03_gold/v2/manifests/`. Use distinct V2 experiment names; do not mix validation/test results between V1 and V2 when comparing cleaning effects.
+
+## Modeling V2
+
+Open [the Colab Modeling V2 notebook](../notebooks/v2/colab_modeling_runner.ipynb) after publishing Gold V2. It verifies the pinned V2 manifest, fits the existing TF-IDF + Logistic Regression and LinearSVC implementations on train, compares validation Macro-F1, and saves new experiments under `experiments/tfidf_baselines_v2/`. It does not touch V1 artifacts or train/score on held-out test.

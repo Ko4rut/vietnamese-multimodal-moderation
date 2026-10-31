@@ -1,4 +1,4 @@
-"""End-to-end baseline fit and validation (never evaluates Gold test)."""
+"""Train TF-IDF baselines on verified Gold V1/V2 (never evaluate held-out test)."""
 
 from __future__ import annotations
 
@@ -22,7 +22,7 @@ def run_experiment(
 ) -> ExperimentResult:
     """Train on Gold train, score validation, and publish a write-once artifact."""
     if config.selection_metric != "macro_f1":
-        raise ValueError("Modeling V1 only supports macro_f1 selection")
+        raise ValueError("TF-IDF baseline modeling only supports macro_f1 selection")
     train, validation = load_gold_training_splits(
         data_lake_root=data_lake_root,
         manifest_name=config.gold_manifest_name,
