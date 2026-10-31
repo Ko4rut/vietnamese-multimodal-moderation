@@ -83,6 +83,10 @@ Silver V1: `02_silver/v1/` and `04_reports/silver/v1/`. Silver V2: `02_silver/v2
 
 - [`notebooks/v1/colab_end_to_end_v1.ipynb`](notebooks/v1/colab_end_to_end_v1.ipynb): one run from pinned Bronze ingestion through Silver V1, Gold V1, and both TF-IDF baselines (no held-out test evaluation).
 - [`notebooks/v1/`](notebooks/v1/): separate Bronze, Silver V1, Gold V1, modeling and Silver V1 EDA notebooks.
-- [`notebooks/v2/`](notebooks/v2/): Silver V2 runner and the earlier optional V2 Data Lake workflow. No Gold V2 notebook is assumed to exist yet.
+- [`notebooks/v2/`](notebooks/v2/): Silver V2 runner and the earlier optional V2 Data Lake workflow. Gold V2 is supported by its dedicated [Colab runner](notebooks/v2/colab_gold_v2_runner.ipynb).
 
 Moving notebooks does **not** move or rename the Google Drive data snapshots; V1 experiments still use `experiments/tfidf_baselines_v1/`.
+
+## Gold V2
+
+The separate Gold V2 pipeline reads a **complete, published Silver V2 snapshot** and writes immutable Gold V2 splits to `03_gold/v2/`, with reports under `04_reports/gold/v2/`. It checks the Silver V2 accepted/rejected/audit files and SHA256 lineage to Silver V1. No V1 snapshots are overwritten. See [Gold V2 guide](docs/GOLD_V2.md) and [Gold V2 Colab runner](notebooks/v2/colab_gold_v2_runner.ipynb).

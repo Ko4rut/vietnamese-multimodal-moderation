@@ -67,6 +67,8 @@ def _publish(source: Path, destination: Path) -> None:
 class GoldPipeline:
     """Build label-encoded, group-aware train/validation/test from one pinned Silver snapshot."""
 
+    version = VERSION
+
     def __init__(
         self,
         reader: SilverReader,
@@ -76,6 +78,13 @@ class GoldPipeline:
         self.reader = reader
         self.config = config or GoldConfig()
         self.root = Path(output_root) if output_root is not None else reader.root
+
+    def _source_metadata(self, verified: dict[str, object]) -> GoldSource:
+        return {
+            "silver_file": self.reader.data_path.name,
+            "silver_quality_report": self.reader.report_path.name,
+            "silver_sha256": str(verified["sha256"]),
+        }
 
     def planned_paths(self, source_sha256: str) -> dict[str, Path]:
         """Compute immutable output paths without creating any artifacts.
@@ -87,19 +96,28 @@ class GoldPipeline:
             "source_sha256": source_sha256,
             "config": self.config.as_dict(),
             "label_to_id": GoldValidator().label_to_id,
-            "pipeline_version": VERSION,
+            "pipeline_version": self.version,
         }
+        if self.version == "v2":
+            # Distinct Silver cleaning rulesets may produce identical text.
+            # Include report bytes to keep Gold V2 lineage unambiguous.
+            params["silver_report_sha256"] = _sha256_file(self.reader.report_path)
         config_hash = hashlib.sha256(
             json.dumps(params, sort_keys=True, separators=(",", ":")).encode("utf-8")
         ).hexdigest()[:10]
         suffix = f"{source_sha256[:12]}_{config_hash}"
+        gold_root = self.root / GOLD_DIR_NAME
+        reports_root = self.root / "04_reports"
+        if self.version == "v2":
+            gold_root /= "v2"
+            reports_root = reports_root / "gold" / "v2"
         paths = {
-            split: self.root / GOLD_DIR_NAME / f"gold_{split}_{VERSION}_{suffix}.jsonl"
+            split: gold_root / f"gold_{split}_{self.version}_{suffix}.jsonl"
             for split in SPLITS
         }
-        paths["report"] = self.root / "04_reports" / f"gold_quality_{VERSION}_{suffix}.json"
+        paths["report"] = reports_root / f"gold_quality_{self.version}_{suffix}.json"
         paths["manifest"] = (
-            self.root / GOLD_DIR_NAME / "manifests" / f"gold_manifest_{VERSION}_{suffix}.json"
+            gold_root / "manifests" / f"gold_manifest_{self.version}_{suffix}.json"
         )
         return paths
 
@@ -120,11 +138,7 @@ class GoldPipeline:
             raise GoldValidationError("Silver record count changed after verification")
         indices, audit = GoldSplitter(self.config).split(rows)
         created = datetime.now(timezone.utc).isoformat()
-        source_metadata: GoldSource = {
-            "silver_file": self.reader.data_path.name,
-            "silver_quality_report": self.reader.report_path.name,
-            "silver_sha256": source["sha256"],
-        }
+        source_metadata = self._source_metadata(source)
 
         with tempfile.TemporaryDirectory(prefix="vtc_gold_") as temp:
             local = {name: Path(temp) / target.name for name, target in paths.items()}
@@ -143,7 +157,7 @@ class GoldPipeline:
                 raise GoldPublicationError("Gold outputs do not sum to Silver accepted rows")
 
             report: GoldQualityReport = {
-                "pipeline_version": VERSION,
+                "pipeline_version": self.version,
                 "source": source_metadata,
                 "input_rows": len(rows),
                 "split_rows": audit["split_rows"],
@@ -160,7 +174,7 @@ class GoldPipeline:
             }
             manifest: GoldManifest = {
                 "format_version": 1,
-                "pipeline_version": VERSION,
+                "pipeline_version": self.version,
                 "source": source_metadata,
                 "total_rows": len(rows),
                 "label_to_id": validator.label_to_id,

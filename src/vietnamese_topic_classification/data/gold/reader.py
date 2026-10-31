@@ -1,4 +1,4 @@
-"""Read and verify a pinned Gold V1 train/validation/test snapshot."""
+"""Read and verify a pinned Gold V1 or V2 train/validation/test snapshot."""
 
 from __future__ import annotations
 
@@ -33,13 +33,21 @@ class GoldReader(BaseReader):
         if not self.is_safe_metadata_name(metadata_name):
             raise GoldManifestError("metadata_name must be a JSON filename, not a path")
         super().__init__(data_lake_root, metadata_name)
-        self.manifest_path = self.root / GOLD_DIR_NAME / "manifests" / metadata_name
+        self.version = "v2" if metadata_name.startswith("gold_manifest_v2_") else "v1"
+        gold_root = self.root / GOLD_DIR_NAME
+        if self.version == "v2":
+            gold_root /= "v2"
+        self.manifest_path = gold_root / "manifests" / metadata_name
         try:
             manifest = json.loads(self.manifest_path.read_text(encoding="utf-8"))
         except (OSError, UnicodeError, json.JSONDecodeError) as exc:
             raise GoldManifestError(f"Cannot read Gold manifest: {self.manifest_path}") from exc
         if not isinstance(manifest, dict) or manifest.get("format_version") != 1:
             raise GoldManifestError("Gold manifest must be a format_version=1 JSON object")
+        if self.version == "v2" and manifest.get("pipeline_version") != "v2":
+            raise GoldManifestError("Gold V2 manifest must declare pipeline_version=v2")
+        if self.version == "v1" and manifest.get("pipeline_version") not in (None, "v1"):
+            raise GoldManifestError("Gold V1 manifest cannot declare a different version")
         expected_mapping = {label: index for index, label in enumerate(get_domain_labels())}
         if manifest.get("label_to_id") != expected_mapping:
             raise GoldManifestError("Gold manifest label mapping differs from domains_v1")
@@ -59,7 +67,11 @@ class GoldReader(BaseReader):
                 r"[0-9a-f]{64}", entry["sha256"]
             ):
                 raise GoldManifestError(f"Invalid Gold checksum for {split}")
-            paths[split] = self.root / GOLD_DIR_NAME / entry["file_name"]
+            if self.version == "v2" and not entry["file_name"].startswith(
+                f"gold_{split}_v2_"
+            ):
+                raise GoldManifestError(f"Gold V2 {split} file has the wrong version")
+            paths[split] = gold_root / entry["file_name"]
             if not paths[split].is_file():
                 raise GoldIntegrityError(f"Gold split missing: {paths[split]}")
         if sum(entries[name]["rows"] for name in SPLITS) != manifest["total_rows"]:
