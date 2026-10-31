@@ -17,7 +17,7 @@ from .exceptions import (
     SilverIntegrityError,
     SilverReportError,
 )
-from .model import SilverQualityReport
+from .v1.model import SilverQualityReport
 
 
 class SilverReader(BaseReader):

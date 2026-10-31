@@ -20,7 +20,7 @@ def test_gold_colab_runner_contract():
         assert cell["execution_count"] is None
 
     source = "\n".join(cell["source"] for cell in code_cells)
-    assert 'BRANCH = "feat/gold-pipeline-v1"' in source
+    assert 'BRANCH = __import__("os").environ.get("VTC_GIT_REF", "main")' in source
     assert 'SILVER_REPORT_NAME = "silver_quality_v1_b81fcce589_seed42_buf10000_n50000.json"' in source
     for expected in (
         "drive.mount(MOUNT)",

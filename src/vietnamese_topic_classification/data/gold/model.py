@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import Literal, TypedDict
 
-from vietnamese_topic_classification.data.silver.model import SilverRecord
+from vietnamese_topic_classification.data.silver.v1.model import SilverRecord
 
 GoldSplitName = Literal["train", "validation", "test"]
 

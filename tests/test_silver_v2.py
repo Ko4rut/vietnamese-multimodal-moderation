@@ -5,9 +5,9 @@ import json
 import pytest
 
 from vietnamese_topic_classification.data.silver import SilverReader
-from vietnamese_topic_classification.data.silver.cleaner_v2 import SilverV2Cleaner
+from vietnamese_topic_classification.data.silver.v2.cleaner import SilverV2Cleaner
 from vietnamese_topic_classification.data.silver.exceptions import SilverPublicationError
-from vietnamese_topic_classification.data.silver.pipeline_v2 import SilverV2Pipeline
+from vietnamese_topic_classification.data.silver.v2.pipeline import SilverV2Pipeline
 
 
 def make_reader(tmp_path, texts):
@@ -127,7 +127,7 @@ def test_footer_only_at_tail_and_guardrail_for_structured_links():
     assert result.text == body + footer
 
 def test_corpus_aware_repeated_ui_keeps_article_content():
-    from vietnamese_topic_classification.data.silver.corpus_v2 import build_corpus_stats
+    from vietnamese_topic_classification.data.silver.v2.corpus import build_corpus_stats
 
     body = "Nội dung bài báo dài. " * 20
     source = "Skip to content\n" + body + "\nEmail *\n"
@@ -139,7 +139,7 @@ def test_corpus_aware_repeated_ui_keeps_article_content():
 
 
 def test_corpus_aware_preserves_references():
-    from vietnamese_topic_classification.data.silver.corpus_v2 import build_corpus_stats
+    from vietnamese_topic_classification.data.silver.v2.corpus import build_corpus_stats
 
     source = "Tài liệu tham khảo\n" + "Nội dung chính. " * 30 + "\nKết luận"
     corpus = build_corpus_stats([{"text": source}] * 4, min_document_frequency=2)

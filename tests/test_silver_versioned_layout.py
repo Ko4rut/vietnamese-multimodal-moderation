@@ -8,12 +8,10 @@ import json
 import pytest
 
 from vietnamese_topic_classification.data.silver import SilverPipeline, SilverReader
-from vietnamese_topic_classification.data.silver.cleaner_v2 import SilverV2Cleaner
 from vietnamese_topic_classification.data.silver.exceptions import SilverReportError
-from vietnamese_topic_classification.data.silver.pipeline_v2 import SilverV2Pipeline
 from vietnamese_topic_classification.data.silver.v1 import SilverPipeline as V1Pipeline
-from vietnamese_topic_classification.data.silver.v2 import SilverV2Cleaner as V2Cleaner
-from vietnamese_topic_classification.data.silver.v2 import SilverV2Pipeline as V2Pipeline
+from vietnamese_topic_classification.data.silver.v2 import SilverV2Cleaner
+from vietnamese_topic_classification.data.silver.v2 import SilverV2Pipeline
 
 
 def _write_versioned(root, version: str, *, legacy: bool = False):
@@ -38,10 +36,10 @@ def _write_versioned(root, version: str, *, legacy: bool = False):
     return report_name
 
 
-def test_canonical_and_legacy_imports_are_identical():
+def test_canonical_versioned_imports():
     assert SilverPipeline is V1Pipeline
-    assert SilverV2Cleaner is V2Cleaner
-    assert SilverV2Pipeline is V2Pipeline
+    assert SilverV2Cleaner.__module__.endswith('.v2.cleaner')
+    assert SilverV2Pipeline.__module__.endswith('.v2.pipeline')
 
 
 @pytest.mark.parametrize("version", ["v1", "v2"])

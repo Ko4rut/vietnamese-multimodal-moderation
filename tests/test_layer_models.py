@@ -13,13 +13,13 @@ from vietnamese_topic_classification.data.bronze.model import (
 from vietnamese_topic_classification.data.gold import GoldManifest, GoldRecord
 from vietnamese_topic_classification.data.gold.model import GoldPipelineResult, GoldQualityReport
 from vietnamese_topic_classification.data.silver import SilverQualityReport, SilverRecord
-from vietnamese_topic_classification.data.silver.model import (
+from vietnamese_topic_classification.data.silver.v1.model import (
     SilverPublishedReport,
     SilverRejectedRecord,
     SilverRunResult,
     ValidationResult,
 )
-from vietnamese_topic_classification.data.silver.validator import (
+from vietnamese_topic_classification.data.silver.v1.validator import (
     ValidationResult as LegacyValidationResult,
 )
 

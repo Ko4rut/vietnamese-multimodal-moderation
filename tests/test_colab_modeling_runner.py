@@ -21,7 +21,7 @@ def test_colab_modeling_runner_contract():
 
     source = "\n".join(cell["source"] for cell in code_cells)
     for required in (
-        'BRANCH = "feat/modeling-diagnostics-v1"',
+        'BRANCH = __import__("os").environ.get("VTC_GIT_REF", "main")',
         'DATA_LAKE_ROOT',
         '"04_gold"',
         'GoldReader(',
