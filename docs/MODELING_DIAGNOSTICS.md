@@ -11,7 +11,7 @@ python scripts/08_plot_diagnostics.py \
   --artifact-dir /content/vtsnlp_drive/MyDrive/vietnamese-multilabel-topic-classification/experiments/tfidf_baselines_v1/<experiment_name>
 ```
 
-Or open `notebooks/colab_modeling_runner.ipynb` on branch `feat/modeling-diagnostics-v1` and run its **diagnostics** cell. Existing trained models are **not overwritten**, and the Gold test split is not loaded into predictions.
+Or open `notebooks/v1/colab_modeling_runner.ipynb` on branch `feat/modeling-diagnostics-v1` and run its **diagnostics** cell. Existing trained models are **not overwritten**, and the Gold test split is not loaded into predictions.
 
 One write-once `diagnostics_v1/` folder per experiment contains:
 

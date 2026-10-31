@@ -7,7 +7,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts/04_generate_silver_eda_notebook.py"
-NOTEBOOK = ROOT / "notebooks/eda/01_silver_eda.ipynb"
+NOTEBOOK = ROOT / "notebooks/v1/eda/01_silver_eda.ipynb"
 
 
 def test_generated_notebook_is_current(tmp_path):

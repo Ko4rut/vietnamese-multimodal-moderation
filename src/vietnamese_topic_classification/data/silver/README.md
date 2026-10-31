@@ -115,7 +115,7 @@ When invoking the Silver CLI as a child Python process, the notebook also sets
 ### Google Colab (recommended for the existing Drive snapshot)
 
 Run the dedicated notebook:
-[**notebooks/colab_silver_runner.ipynb**](../../../../notebooks/colab_silver_runner.ipynb).
+[**notebooks/v1/colab_silver_runner.ipynb**](../../../../notebooks/v1/colab_silver_runner.ipynb).
 
 It performs these steps: fetch the Silver feature branch → install package → mount the **correct**
 Google account → check manifest/Bronze and existing outputs → run the CLI → verify published

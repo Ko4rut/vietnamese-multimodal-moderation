@@ -12,12 +12,13 @@ from pathlib import Path
 import pytest
 
 NOTEBOOKS = [
-    "colab_runner.ipynb",
-    "colab_silver_runner.ipynb",
-    "colab_silver_v2_runner.ipynb",
-    "colab_gold_runner.ipynb",
-    "colab_modeling_runner.ipynb",
-    "colab_data_lake_end_to_end.ipynb",
+    "v1/colab_runner.ipynb",
+    "v1/colab_silver_runner.ipynb",
+    "v2/colab_silver_v2_runner.ipynb",
+    "v1/colab_gold_runner.ipynb",
+    "v1/colab_modeling_runner.ipynb",
+    "v2/colab_data_lake_end_to_end.ipynb",
+    "v1/colab_end_to_end_v1.ipynb",
 ]
 ROOT = Path(__file__).resolve().parents[1] / "notebooks"
 
@@ -44,7 +45,7 @@ def test_colab_code_parses_without_stale_feature_branches(name):
 
 
 def test_end_to_end_orders_stages_and_verifies_existing():
-    nb = json.loads((ROOT / "colab_data_lake_end_to_end.ipynb").read_text())
+    nb = json.loads((ROOT / "v2/colab_data_lake_end_to_end.ipynb").read_text())
     ids = [cell["id"] for cell in nb["cells"]]
     assert ids == [
         "intro", "setup", "mount", "parameters", "bronze",
@@ -66,7 +67,7 @@ def test_end_to_end_orders_stages_and_verifies_existing():
 
 
 def test_silver_v1_colab_does_not_use_stale_constructor_or_paths():
-    nb = json.loads((ROOT / "colab_silver_runner.ipynb").read_text())
+    nb = json.loads((ROOT / "v1/colab_silver_runner.ipynb").read_text())
     source = "\n".join(cell["source"] for cell in nb["cells"] if cell["cell_type"] == "code")
     assert "BronzeReader(data_lake_root=DATA_LAKE_ROOT, metadata_name=MANIFEST_NAME)" in source
     assert "SilverPipeline(reader)" in source
@@ -76,14 +77,35 @@ def test_silver_v1_colab_does_not_use_stale_constructor_or_paths():
 
 
 def test_gold_and_v2_reference_new_silver_report_layout():
-    for name in ("colab_gold_runner.ipynb", "colab_silver_v2_runner.ipynb"):
+    for name in ("v1/colab_gold_runner.ipynb", "v2/colab_silver_v2_runner.ipynb"):
         nb = json.loads((ROOT / name).read_text())
         source = "\n".join(
             cell["source"] for cell in nb["cells"] if cell["cell_type"] == "code"
         )
         assert '"04_reports" / "silver" / "v1"' in source
-    nb = json.loads((ROOT / "colab_silver_v2_runner.ipynb").read_text())
+    nb = json.loads((ROOT / "v2/colab_silver_v2_runner.ipynb").read_text())
     source = "\n".join(cell["source"] for cell in nb["cells"] if cell["cell_type"] == "code")
     assert "from vietnamese_topic_classification.data.silver.v2.cleaner import" in source
     assert "from vietnamese_topic_classification.data.silver.v2.corpus import" in source
     assert "PUBLISH = False" in source
+
+
+def test_v1_end_to_end_is_pinned_and_trains_without_silver_v2():
+    nb = json.loads((ROOT / "v1/colab_end_to_end_v1.ipynb").read_text(encoding="utf-8"))
+    ids = [cell["id"] for cell in nb["cells"]]
+    assert ids == [
+        "intro", "setup", "mount", "parameters", "bronze", "silver-v1",
+        "gold-v1", "model-config", "train", "compare", "diagnostics", "finish",
+    ]
+    source = "\n".join(cell["source"] for cell in nb["cells"] if cell["cell_type"] == "code")
+    for token in (
+        '".[data,modeling]"', 'bronze_reader.verify()', 'v1_reader.verify()',
+        'gold_reader.verify()', 'scripts/06_train_baseline.py',
+        '"logistic_regression"', '"linear_svc"', 'macro_f1',
+        'GOLD_MANIFEST_NAME = gold_paths["manifest"].name',
+        'RUN_DIAGNOSTICS = False', 'if existing_gold:', 'if bronze_existing:',
+    ):
+        assert token in source
+    assert "SilverV2Pipeline" not in source
+    assert "GOLD_SOURCE_VERSION" not in source
+    assert "scripts/07_evaluate_model.py" not in source

@@ -2,15 +2,17 @@
 
 ## What is automated?
 
-The notebook [`colab_data_lake_end_to_end.ipynb`](../notebooks/colab_data_lake_end_to_end.ipynb)
+The notebook [`colab_data_lake_end_to_end.ipynb`](../notebooks/v2/colab_data_lake_end_to_end.ipynb)
 runs **clone → pip install → Google Drive mount → Bronze verify/ingest → Silver V1
 verify/build → Silver V2 dry-run (or opt-in publish) → Gold V1 verify/build**.
-The modeling notebook stays separate to avoid surprise training cost.
+The optional V2 notebook deliberately keeps modeling separate. The dedicated V1 end-to-end notebook includes both baselines by design.
 
 A GitHub clone only provides the source code. Data are **not** automatically
 included in the repository, Google authentication cannot be bypassed, and
 the Colab Drive mount lives inside the collaborator's **cloud runtime**, not
 their own laptop filesystem.
+
+For a V1-only full pipeline including modeling, open [the V1 end-to-end notebook](../notebooks/v1/colab_end_to_end_v1.ipynb).
 
 ## One-time setup for each teammate
 
@@ -20,8 +22,8 @@ their own laptop filesystem.
 2. Add the shared lake folder to **My Drive** using a shortcut named
    `vietnamese-multilabel-topic-classification`. Or set the environment variable
    `DATA_LAKE_ROOT` to the exact path visible *inside the mounted Drive*.
-3. Open [the end-to-end Colab notebook](../notebooks/colab_data_lake_end_to_end.ipynb).
-   Once PR #15 is merged, leave `VTC_GIT_REF` unset, to use `main`.
+3. Open [the end-to-end Colab notebook](../notebooks/v2/colab_data_lake_end_to_end.ipynb).
+   Leave `VTC_GIT_REF` unset to use `main` after merging your changes.
    To preview the unmerged PR, set it in Colab's first cell:
 
    ```python
