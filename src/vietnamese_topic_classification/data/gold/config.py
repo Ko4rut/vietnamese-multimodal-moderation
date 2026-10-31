@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass
 
 # Canonical Data Lake folder shared by Gold publication and reading.
-GOLD_DIR_NAME = "04_gold"
+GOLD_DIR_NAME = "03_gold"
 
 
 @dataclass(frozen=True)

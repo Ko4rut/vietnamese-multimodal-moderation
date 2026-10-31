@@ -85,9 +85,9 @@ class SilverV2Pipeline:
             / f"vtsnlp_silver_{VERSION}_{suffix}.jsonl",
             "rejected": self.root / "02_silver" / VERSION
             / f"vtsnlp_rejected_{VERSION}_{suffix}.jsonl",
-            "audit": self.root / "05_reports" / "silver" / VERSION
+            "audit": self.root / "04_reports" / "silver" / VERSION
             / f"silver_audit_{VERSION}_{suffix}.jsonl",
-            "report": self.root / "05_reports" / "silver" / VERSION
+            "report": self.root / "04_reports" / "silver" / VERSION
             / f"silver_quality_{VERSION}_{suffix}.json",
         }
 
@@ -98,8 +98,8 @@ class SilverV2Pipeline:
         legacy_paths = [
             self.root / "02_silver" / paths["silver"].name,
             self.root / "02_silver" / paths["rejected"].name,
-            self.root / "05_reports" / paths["audit"].name,
-            self.root / "05_reports" / paths["report"].name,
+            self.root / "04_reports" / paths["audit"].name,
+            self.root / "04_reports" / paths["report"].name,
         ]
         if not dry_run and any(
             path.exists() or path.with_name(path.name + ".uploading").exists()

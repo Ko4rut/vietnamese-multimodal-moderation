@@ -97,7 +97,7 @@ class GoldPipeline:
             split: self.root / GOLD_DIR_NAME / f"gold_{split}_{VERSION}_{suffix}.jsonl"
             for split in SPLITS
         }
-        paths["report"] = self.root / "05_reports" / f"gold_quality_{VERSION}_{suffix}.json"
+        paths["report"] = self.root / "04_reports" / f"gold_quality_{VERSION}_{suffix}.json"
         paths["manifest"] = (
             self.root / GOLD_DIR_NAME / "manifests" / f"gold_manifest_{VERSION}_{suffix}.json"
         )

@@ -78,7 +78,7 @@ class SilverPipeline:
             / f"vtsnlp_silver_{SILVER_VERSION}_{suffix}.jsonl",
             "rejected": self.root / "02_silver" / SILVER_VERSION
             / f"vtsnlp_rejected_{SILVER_VERSION}_{suffix}.jsonl",
-            "report": self.root / "05_reports" / "silver" / SILVER_VERSION
+            "report": self.root / "04_reports" / "silver" / SILVER_VERSION
             / f"silver_quality_{SILVER_VERSION}_{suffix}.json",
         }
 
@@ -88,7 +88,7 @@ class SilverPipeline:
         legacy_paths = [
             self.root / "02_silver" / output["silver"].name,
             self.root / "02_silver" / output["rejected"].name,
-            self.root / "05_reports" / output["report"].name,
+            self.root / "04_reports" / output["report"].name,
         ]
         if any(path.exists() or path.with_name(path.name + ".uploading").exists()
                for path in (*output.values(), *legacy_paths)):

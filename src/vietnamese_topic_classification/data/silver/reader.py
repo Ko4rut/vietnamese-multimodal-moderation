@@ -33,7 +33,7 @@ class SilverReader(BaseReader):
         super().__init__(data_lake_root, metadata_name)
         # V1 and legacy V2 reports were published flat. New V2 reports have
         # their own version directory; accept both without changing callers.
-        reports_root = self.root / "05_reports"
+        reports_root = self.root / "04_reports"
         candidates = [
             reports_root / "silver" / "v1" / self.metadata_name,
             reports_root / "silver" / "v2" / self.metadata_name,
