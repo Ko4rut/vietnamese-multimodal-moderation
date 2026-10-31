@@ -72,7 +72,7 @@ invalid Bronze manifests and publication failures can stop the pipeline.
 | `source_line` | 1-based source record position |
 | `source_snapshot` | Bronze file from which the row came |
 
-### Quality report (`05_reports/silver/v1/silver_quality_v1_*.json`)
+### Quality report (`04_reports/silver/v1/silver_quality_v1_*.json`)
 
 Contains `input_rows`, `accepted_rows`, `rejected_rows`, `rejection_reasons`,
 `accepted_domain_counts`, text-length **min/max/mean**, source manifest name and checksum,
@@ -135,7 +135,7 @@ DATA_LAKE_ROOT/
 ├── 02_silver/
 │   ├── vtsnlp_silver_v1_...jsonl         (accepted)
 │   └── vtsnlp_rejected_v1_...jsonl       (rejected)
-└── 05_reports/
+└── 04_reports/
     └── silver_quality_v1_...json        (audit report)
 ```
 
@@ -171,7 +171,7 @@ python scripts/03_read_silver.py \
   --limit 3
 ```
 
-Use the actual report filename in `05_reports/`. The command only verifies and previews
+Use the actual report filename in `04_reports/`. The command only verifies and previews
 the accepted Silver rows; it does not re-run Silver, read rejected records, or modify artifacts.
 For code usage:
 
@@ -188,7 +188,7 @@ for record in reader.iter_records():
 ## Shared Reader interface
 
 `BronzeReader` and `SilverReader` both accept `(data_lake_root, metadata_name)`. Bronze resolves
-the name under `00_source_metadata/`, while Silver resolves it under `05_reports/`. This
+the name under `00_source_metadata/`, while Silver resolves it under `04_reports/`. This
 unifies the Python API without changing already-published snapshots.
 
 To run the shared read-only smoke check:

@@ -45,8 +45,8 @@ DATA_LAKE_ROOT/
   02_silver/
     v1/                       # Accepted/rejected Silver V1
     v2/                       # Accepted/rejected Silver V2
-  04_gold/                    # Gold V1 splits + manifests
-  05_reports/
+  03_gold/                    # Gold V1 splits + manifests
+  04_reports/
     silver/v1/                # Silver V1 quality
     silver/v2/                # Silver V2 quality + audit
     gold_quality_*.json       # Gold V1 quality

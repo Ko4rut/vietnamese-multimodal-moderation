@@ -77,4 +77,4 @@ For colleagues, start with **[End-to-end Colab runner](notebooks/colab_data_lake
 
 **Required:** The data owner must share the Google Drive Data Lake folder with each collaborator; each user must authorize Colab's Drive mount. A GitHub clone cannot download private Drive data or mount the cloud folder onto a teammate's physical computer. Add a shortcut named `vietnamese-multilabel-topic-classification` to My Drive, or provide the real Colab-mounted `DATA_LAKE_ROOT`.
 
-Silver V1: `02_silver/v1/` and `05_reports/silver/v1/`. Silver V2: `02_silver/v2/` and `05_reports/silver/v2/`. Bronze and Gold retain their existing locations. No duplicate root-level Silver implementation modules remain.
+Silver V1: `02_silver/v1/` and `04_reports/silver/v1/`. Silver V2: `02_silver/v2/` and `04_reports/silver/v2/`. Bronze and Gold retain their existing locations. No duplicate root-level Silver implementation modules remain.

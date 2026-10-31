@@ -1,7 +1,7 @@
 # Gold V1 — ML-ready topic classification splits
 
 **Source:** one immutable Silver accepted JSONL snapshot pinned by its existing quality report
-under DATA_LAKE_ROOT/05_reports/. Gold does not download data, clean text again,
+under DATA_LAKE_ROOT/04_reports/. Gold does not download data, clean text again,
 tokenize, produce TF-IDF features, train a model, or change the source topic labels.
 
 ## Run locally (from repository root)
@@ -47,12 +47,12 @@ split; transformer tokenization belongs to modeling.
 ## Output layout
 
     DATA_LAKE_ROOT/
-      04_gold/
+      03_gold/
         gold_train_v1_<source-config-id>.jsonl
         gold_validation_v1_<source-config-id>.jsonl
         gold_test_v1_<source-config-id>.jsonl
         manifests/gold_manifest_v1_<source-config-id>.json
-      05_reports/
+      04_reports/
         gold_quality_v1_<source-config-id>.json
 
 Each Gold record has ID, normalized text, original domain, stable label_id,

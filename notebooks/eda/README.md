@@ -53,7 +53,7 @@ working directory, use `DATA_LAKE_ROOT_OVERRIDE = r"E:\path\to\data-lake"` in
 the notebook configuration cell instead of relying on the repo-root `.env`.
 
 Set `SILVER_REPORT_NAME` in notebook Section 0 to the actual JSON filename inside
-`05_reports/`. `SilverReader.verify()` checks the Silver snapshot before EDA.
+`04_reports/`. `SilverReader.verify()` checks the Silver snapshot before EDA.
 
 ## Outputs and scope
 
@@ -65,7 +65,7 @@ leakage audit. Label validity must still be reviewed before Gold.
 The notebook reads the existing snapshots without transforming them or creating Gold.
 By default, `EXPORT_RESULTS=False` and nothing is written. If set to `True`,
 it exports summary JSON and PNGs to
-`05_reports/eda/<silver_snapshot_stem>/` and refuses to overwrite existing files.
+`04_reports/eda/<silver_snapshot_stem>/` and refuses to overwrite existing files.
 Text snippets appear only in notebook output; exported summary has no raw articles.
 
 ## Regenerate or check the notebook
