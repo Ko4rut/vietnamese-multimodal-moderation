@@ -1,96 +1,322 @@
 # Vietnamese Text Topic Classification
 
-**Current scope:** Vietnamese **single-label, multiclass** text topic classification using the **25 `domain` labels** in `VTSNLP/vietnamese_curated_dataset`.
+A reproducible Python research pipeline for **single-label, multiclass Vietnamese text topic classification** over the **25 `domain` categories** in `VTSNLP/vietnamese_curated_dataset`.
 
-> The GitHub repository URL retains the older `vietnamese-multimodal-moderation` name. Earlier multimodal/multi-label assets in `docs/` are historical references, **not** the current research objective.
+> **Scope clarification:** The repository URL is still `vietnamese-multimodal-moderation` for historical reasons. This implementation focuses on **text topic classification**, not multimodal content moderation or multi-label prediction. Older proposal/design files may describe a different objective.
 
-## Research setup
+## Contents
 
-- **Input:** one Vietnamese text document (`text`) with source record ID (`id`).
-- **Target:** exactly one of 25 source `domain` categories. Canonical order lives in `src/vietnamese_topic_classification/config/domains_v1.yaml`.
-- **Source revision:** `b81fcce58945970117a1b56d50ec81be2628a5c3` (pinned in the YAML config).
-- **Labels are automatically assigned source labels**, not independently verified human ground truth. Any downstream evaluation must make that limitation explicit.
-- **First experiment:** 50K Bronze sample, followed by Silver validation and fixed Gold train/validation/test splits; compare TF-IDF + Logistic Regression with and without class weighting.
-- **Primary evaluation:** Macro-F1 and per-class F1; also report Accuracy and confusion matrix. A manually reviewed test subset is recommended.
+- [Research scope and limitations](#research-scope-and-limitations)
+- [System architecture](#system-architecture)
+- [Repository structure](#repository-structure)
+- [Quick start (local)](#quick-start-local)
+- [Google Drive Data Lake](#google-drive-data-lake)
+- [Run pipelines on Google Colab](#run-pipelines-on-google-colab)
+- [Run individual stages from the CLI](#run-individual-stages-from-the-cli)
+- [Modeling and evaluation](#modeling-and-evaluation)
+- [Development and CI](#development-and-ci)
+- [Troubleshooting](#troubleshooting)
+- [Documentation and project status](#documentation-and-project-status)
 
-## Repository layout
+## Research scope and limitations
+
+| Item | Current implementation |
+| --- | --- |
+| Input | One Vietnamese document with source `id` and `text` |
+| Target | Exactly one of 25 source `domain` categories |
+| Canonical labels | [`config/domains_v1.yaml`](src/vietnamese_topic_classification/config/domains_v1.yaml), with stable 0-based `label_id` |
+| Source revision | `b81fcce58945970117a1b56d50ec81be2628a5c3`, pinned in config |
+| Initial corpus | Reproducible 50,000-record Bronze sample |
+| Default Gold split | 80% train / 10% validation / 10% test, seed 42 |
+| Available baseline models | TF-IDF + Logistic Regression; TF-IDF + LinearSVC; optional class-weighted Logistic Regression |
+| Model selection | Validation Macro-F1 (also inspect per-class F1 and accuracy) |
+| Final evaluation | Separate, explicit held-out test evaluation; confusion matrix and diagnostics are available |
+
+**Label caveat:** The 25 domains are source-assigned labels, **not independently validated human ground truth**. Report metrics with this limitation and manually audit samples before making strong claims about real-world performance. Gold performs approximate near-duplicate leakage mitigation; it does **not** prove that every near-duplicate or semantic overlap has been eliminated.
+
+## System architecture
+
+The pipeline uses **VS Code/local development → GitHub for versioned code → Google Colab for execution → Google Drive for persistent data and experiment artifacts**. The Python package can also run locally when the Data Lake is accessible on that machine.
 
 ```text
-src/vietnamese_topic_classification/
-  __main__.py                # Package CLI
-  config/domains_v1.yaml     # Task, source revision, 25 labels
-  config/settings.py        # DataLakeConfig and DATA_LAKE_ROOT configuration
-  data/bronze/              # Bronze ingestor, reader and exceptions
-  data/silver/v1/           # Silver V1 schema validation and normalization
-  data/silver/v2/           # Silver V2 corpus-aware cleaning and audit
-  data/silver/reader.py     # Version-aware Silver snapshot verification
-  data/colab_lake.py        # Teammate-specific Drive mount resolution
-  data/gold/                # Gold V1 train/validation/test and manifests
-  training/                 # TF-IDF Logistic Regression and LinearSVC baselines
-  evaluation/               # Metrics and diagnostics
-tests/test_package.py       # Offline packaging and config tests
-.github/workflows/ci.yml    # Lint, tests and installed-package smoke test
-scripts/                    # Bronze ingestion CLI and related tooling
-docs/                       # Current architecture/plan plus legacy references
+Pinned VTSNLP source
+       |
+       v
+  Bronze (raw, immutable JSONL + source manifest)
+       |
+       v
+  Silver V1 (schema validation, NFC normalization, exact deduplication)
+       |                                  |
+       |                                  v
+       |                           Silver V2 (audited,
+       |                           corpus-aware cleaning)
+       v                                  |
+  Gold V1 (train/val/test)                v
+       |                           Gold V2 (train/val/test)
+       |                                  |
+       v                                  v
+  Modeling V1                         Modeling V2
+       |                                  |
+       +-----------+----------------------+
+                   |
+          Shared training factory
+          TF-IDF + LR / LinearSVC
+                   |
+            Validation metrics
+            + diagnostics
+                   |
+       Selected model -> held-out test
 ```
 
-## Local development (VS Code)
+**Important boundaries:**
 
-Python 3.10+ is required.
+- **Bronze** preserves sampled source records and provenance; it does not clean labels or text.
+- **Silver V1** validates, minimally normalizes and deduplicates. **Silver V2** reads a published Silver V1 snapshot and adds audited corpus-aware cleaning; its publication is opt-in.
+- **Gold V1/V2** produces immutable, versioned train/validation/test splits, label mapping, manifests and quality reports. It does **not** tokenize or create TF-IDF features. Gold V2 requires a complete published Silver V2 snapshot.
+- **Training** fits TF-IDF on training data and fits separate model parameters for each experiment. Modeling V2 **reuses the factory/code but never reuses V1's fitted model**.
+- **Evaluation** uses validation for comparison; access to the held-out test set is a separate explicit action. Keep track of manifest checksums, source lineage and experiment configuration.
+- Versioned data snapshots and experiment artifacts are never meant to overwrite one another. V1/V2 validation deltas **do not isolate the effect of cleaning**, because Gold split membership may differ.
+
+## Repository structure
+
+```text
+.
+├── .github/workflows/ci.yml            # Ruff, pytest, installed-package smoke check
+├── .env.example                        # DATA_LAKE_ROOT template (no credentials)
+├── apps/api/                            # Future API placeholder, not a working service
+├── apps/web/                            # Future web UI placeholder
+├── docs/                                # Guides, experiment notes, historical documents
+├── notebooks/
+│   ├── v1/                              # Bronze -> Silver V1 -> Gold V1 -> Modeling V1
+│   └── v2/                              # Silver V2 -> Gold V2 -> Modeling V2
+├── scripts/
+│   ├── 01_ingest_bronze.py
+│   ├── 02_build_silver.py
+│   ├── 03_read_silver.py
+│   ├── 04_generate_silver_eda_notebook.py
+│   ├── 05_build_gold.py
+│   ├── 06_train_baseline.py
+│   ├── 07_evaluate_model.py
+│   ├── 08_plot_diagnostics.py
+│   ├── 09_build_silver_v2.py
+│   └── 10_build_gold_v2.py
+├── src/vietnamese_topic_classification/
+│   ├── __main__.py                      # vtc metadata/list-domains CLI
+│   ├── config/                          # Domain list and DataLakeConfig
+│   ├── data/
+│   │   ├── bronze/                      # Ingestor, Reader, contracts
+│   │   ├── silver/
+│   │   │   ├── v1/                      # Validation and normalization
+│   │   │   ├── v2/                      # Cleaning, corpus audit, publication
+│   │   │   └── reader.py               # Version-aware snapshot reader
+│   │   ├── gold/
+│   │   │   ├── v2/                      # V2 pipeline and lineage verification
+│   │   │   ├── pipeline.py              # V1 Gold implementation
+│   │   │   ├── splitter.py              # Deterministic, group-aware split
+│   │   │   └── reader.py                # Verify/read Gold V1 or V2
+│   │   └── colab_lake.py               # Mounted Drive path resolution
+│   ├── training/                        # Config, dataset, factory, runner, artifacts
+│   └── evaluation/                      # Metrics, reports, diagnostics
+├── tests/                               # Offline tests and synthetic snapshots
+└── pyproject.toml                       # Package and optional dependency groups
+```
+
+The `data/` and `experiments/` folders in Git are placeholders, **not** copies of the real Google Drive lake.
+
+## Quick start (local)
+
+**Prerequisites:** Python 3.10+, Git, and a virtual environment. VS Code is optional. A local smoke test needs **no dataset, Colab session, Google token, or GPU**.
+
+### 1. Clone and create the environment
 
 ```bash
-python -m pip install -e ".[dev]"
+git clone https://github.com/Ko4rut/vietnamese-multimodal-moderation.git
+cd vietnamese-multimodal-moderation
+
+python -m venv .venv
+# macOS/Linux:
+source .venv/bin/activate
+# Windows PowerShell (instead of the line above):
+# .venv\Scripts\Activate.ps1
+
+python -m pip install --upgrade pip
+python -m pip install -e ".[dev,modeling,data]"
+```
+
+Dependency groups in `pyproject.toml`:
+
+| Extra | Purpose |
+| --- | --- |
+| `dev` | `pytest` and `ruff` |
+| `data` | Hugging Face `datasets` for Bronze ingestion |
+| `modeling` | `scikit-learn`, `joblib`, `matplotlib` for training/evaluation |
+| `eda` | Notebook, Pandas/NumPy and plotting tools for Silver EDA |
+
+Use `pip install -e ".[dev,eda,modeling,data]"` if you need everything, including local EDA notebooks.
+
+### 2. Verify installation
+
+```bash
 ruff check src tests
 pytest -q
 python -m vietnamese_topic_classification --list-domains
 vtc --version
 ```
 
-The `vtc` CLI currently only displays metadata; ingestion runs through `scripts/01_ingest_bronze.py`, while `python -m vietnamese_topic_classification.data.main` validates/reads an existing Bronze snapshot.
+These commands verify packaging, lint and offline tests. **They do not train a model.** The `vtc` entrypoint currently prints metadata/domains, not a pipeline runner; stage entrypoints live under `scripts/`.
 
-## Hybrid workflow: VS Code → GitHub → Colab → Google Drive
+### 3. Point the package at your existing lake (only for data/modeling)
 
-1. Develop and commit Python source locally in VS Code. Keep raw datasets and credentials out of Git.
-2. Push to this **public** GitHub repository. Colab can clone it over HTTPS without a GitHub token.
-3. In Colab, clone and install the package (`python -m pip install -e ".[dev]"`).
-4. Mount the **Google account containing the VTSNLP project**; verify the 50K Bronze file before running future pipeline scripts.
-5. Copy `.env.example` to `.env` and set `DATA_LAKE_ROOT` to the verified local/mounted Data Lake folder. The `DataLakeConfig` factory loads `.env` from the working directory (explicit OS environment variables take precedence).
-6. Store output data and reports on Google Drive, not in GitHub.
+Copy `.env.example` to `.env` and set `DATA_LAKE_ROOT` to a **directory accessible to the runtime**, for example:
 
-The existing Drive folder may still be named `vietnamese-multilabel-topic-classification`. This historical folder name does not change the current single-label task. Avoid renaming it before updating notebook paths.
+```dotenv
+# Example only: use the path of your own mounted/synced Drive folder
+DATA_LAKE_ROOT=/content/drive/MyDrive/vietnamese-multilabel-topic-classification
+```
 
-## Data layers (planned)
+The path must exist; in Colab, mount Google Drive **before** reading it. The configuration loader reads `.env` from the current working directory, while an explicitly set OS environment variable takes precedence. Never commit `.env`, tokens, raw datasets, or experiment models.
 
-- **Bronze:** original downloaded JSONL records.
-- **Silver:** minimally normalized, schema-validated, deduplicated text and source metadata. **No padding/tokenization here.**
-- **Gold:** reproducible split datasets and label mappings; protect against duplicate/near-duplicate train–test leakage.
-- **Training:** model-specific tokenization/padding for Transformers; TF-IDF baseline needs no padding.
+## Google Drive Data Lake
 
-The earlier 3K balanced Silver candidate file and multi-label annotation template are legacy exploration artifacts, **not** the intended 50K single-label baseline. Silver V1, Silver V2, Gold V1 and TF-IDF modeling are implemented; Silver snapshots on Drive are segregated by version.
+GitHub contains **code/config/docs**, not the complete dataset. A collaborator needs access granted by the Data Lake owner and must mount Drive in **their own Colab runtime** (or mount/sync the folder locally). A GitHub clone alone cannot access private Google Drive files.
 
-See [Silver V1 pipeline details](src/vietnamese_topic_classification/data/silver/README.md), [Colab Silver runner](notebooks/v1/colab_silver_runner.ipynb), [architecture](docs/ARCHITECTURE.md) and [implementation plan](docs/IMPLEMENTATION_PLAN.md).
+Representative published layout:
 
+```text
+DATA_LAKE_ROOT/
+├── 00_source_metadata/                 # Bronze manifests
+├── 01_bronze/                          # Raw source JSONL
+├── 02_silver/
+│   ├── v1/                             # Silver V1 accepted/rejected
+│   └── v2/                             # Silver V2 accepted/rejected
+├── 03_gold/
+│   ├── manifests/                      # Gold V1 manifests
+│   ├── gold_*_v1_*.jsonl                # Gold V1 splits
+│   └── v2/
+│       ├── manifests/                  # Gold V2 manifests
+│       └── gold_*_v2_*.jsonl           # Gold V2 splits
+├── 04_reports/
+│   ├── silver/v1/                       # Silver V1 quality reports
+│   ├── silver/v2/                       # Silver V2 reports/audits
+│   ├── gold/v2/                         # Gold V2 quality reports
+│   └── gold_quality_v1_*.json          # Gold V1 reports
+└── experiments/
+    ├── tfidf_baselines_v1/             # Trained V1 experiments
+    └── tfidf_baselines_v2/             # Freshly trained V2 experiments
+```
 
-## Team onboarding: run Colab without rewriting the lake
+Some older lake snapshots use flat legacy paths. The readers support version-aware resolution; do **not** manually move or rename shared snapshots just to make them look like the tree above. The shared folder may still be named `vietnamese-multilabel-topic-classification`; the name does not change the current task.
 
-For colleagues, start with **[End-to-end Colab runner](notebooks/v2/colab_data_lake_end_to_end.ipynb)** and **[Team setup guide](docs/COLAB_TEAM_SETUP.md)**. After the refactor PR is merged, the notebook fetches `main`, installs the project, mounts each user's Drive, verifies existing immutable data, processes missing Bronze/Silver V1/Gold snapshots, and runs Silver V2 as a dry-run. Publishing Silver V2 is explicitly opt-in.
+**Sharing:** Ask the owner to share the lake folder with your Google account. Where appropriate, add a shortcut to **My Drive** with the expected folder name or set the notebook's mount-path override. Read access can suffice for verification/training from existing data; publishing snapshots requires write access. See [team setup](docs/COLAB_TEAM_SETUP.md).
 
-**Required:** The data owner must share the Google Drive Data Lake folder with each collaborator; each user must authorize Colab's Drive mount. A GitHub clone cannot download private Drive data or mount the cloud folder onto a teammate's physical computer. Add a shortcut named `vietnamese-multilabel-topic-classification` to My Drive, or provide the real Colab-mounted `DATA_LAKE_ROOT`.
+## Run pipelines on Google Colab
 
-Silver V1: `02_silver/v1/` and `04_reports/silver/v1/`. Silver V2: `02_silver/v2/` and `04_reports/silver/v2/`. Bronze and Gold retain their existing locations. No duplicate root-level Silver implementation modules remain.
+**Recommended for teammates:** Open the notebook from GitHub or upload it to Colab, run its cells from top to bottom, authorize `drive.mount()`, and confirm that `DATA_LAKE_ROOT` resolves to the correct folder. Notebook setup clones the chosen Git branch (`VTC_GIT_REF` defaults to `main`) and installs the required package. CPU is sufficient for the current TF-IDF baselines; a GPU is not required.
 
-## Versioned Colab notebooks
+### V1 — one notebook, Bronze through baseline training
 
-- [`notebooks/v1/colab_end_to_end_v1.ipynb`](notebooks/v1/colab_end_to_end_v1.ipynb): one run from pinned Bronze ingestion through Silver V1, Gold V1, and both TF-IDF baselines (no held-out test evaluation).
-- [`notebooks/v1/`](notebooks/v1/): separate Bronze, Silver V1, Gold V1, modeling and Silver V1 EDA notebooks.
-- [`notebooks/v2/`](notebooks/v2/): Silver V2 runner and the earlier optional V2 Data Lake workflow. Gold V2 is supported by its dedicated [Colab runner](notebooks/v2/colab_gold_v2_runner.ipynb).
+Start with **[V1 end-to-end Colab runner](notebooks/v1/colab_end_to_end_v1.ipynb)**. It verifies/reuses or produces Bronze, Silver V1 and Gold V1, then trains TF-IDF + Logistic Regression and TF-IDF + LinearSVC sequentially. Optionally enable balanced Logistic Regression and diagnostics. **Held-out test evaluation is intentionally separate.**
 
-Moving notebooks does **not** move or rename the Google Drive data snapshots; V1 experiments still use `experiments/tfidf_baselines_v1/`.
+For individual stages use [Bronze](notebooks/v1/colab_runner.ipynb), [Silver V1](notebooks/v1/colab_silver_runner.ipynb), [Gold V1](notebooks/v1/colab_gold_runner.ipynb), [Modeling V1](notebooks/v1/colab_modeling_runner.ipynb), or [Silver V1 EDA](notebooks/v1/eda/01_silver_eda.ipynb).
 
-## Gold V2
+### V2 — separate, explicit publication steps
 
-The separate Gold V2 pipeline reads a **complete, published Silver V2 snapshot** and writes immutable Gold V2 splits to `03_gold/v2/`, with reports under `04_reports/gold/v2/`. It checks the Silver V2 accepted/rejected/audit files and SHA256 lineage to Silver V1. No V1 snapshots are overwritten. See [Gold V2 guide](docs/GOLD_V2.md) and [Gold V2 Colab runner](notebooks/v2/colab_gold_v2_runner.ipynb).
+Run the following in order, against the **same verified lake**:
 
-## Modeling V2 — retrain, never reuse V1 model
+1. **[Silver V2 runner](notebooks/v2/colab_silver_v2_runner.ipynb):** read/verify Silver V1, inspect cleaning results and audit, then explicitly publish a complete Silver V2 snapshot if approved.
+2. **[Gold V2 runner](notebooks/v2/colab_gold_v2_runner.ipynb):** choose the published Silver V2 report, verify all source files/checksums and set `PUBLISH_GOLD_V2=True` to publish isolated V2 splits.
+3. **[Modeling V2 runner](notebooks/v2/colab_modeling_runner.ipynb):** choose the published Gold V2 manifest and fit **new** TF-IDF + Logistic Regression/LinearSVC models, saving them under `experiments/tfidf_baselines_v2/`.
 
-Use [Modeling V2 on Colab](notebooks/v2/colab_modeling_runner.ipynb) after Gold V2 has been published and verified. The notebook reuses the existing TF-IDF + Logistic Regression/LinearSVC factory and CLI, but fits new parameters from `03_gold/v2/manifests/` and publishes isolated artifacts in `experiments/tfidf_baselines_v2/`. Validation Macro-F1 is used for selection; test is held out. See [the Modeling guide](docs/COLAB_MODELING.md). A V1/V2 score delta alone does not isolate the cleaning effect because the Gold splits may differ.
+The [V2 Data Lake end-to-end notebook](notebooks/v2/colab_data_lake_end_to_end.ipynb) is an **optional preparation workflow**, **not** an end-to-end Modeling V2 runner. It can verify/build earlier stages and perform a Silver V2 dry-run; use the dedicated Gold V2 and Modeling V2 notebooks for the full V2 path.
+
+For consistency, use an explicit `VTC_GIT_REF` when reviewing a feature branch; on `main` leave it unset. Publishing an immutable snapshot is not the same as a dry-run. Do not launch concurrent writes to the same target snapshot.
+
+## Run individual stages from the CLI
+
+With your environment activated and `DATA_LAKE_ROOT` pointing to an **existing** mounted/synced lake, the script entrypoints can be run from the repository root. Replace example filenames with **actual manifest/report names from your lake**.
+
+```bash
+# 1. Only if the pinned Bronze source has not already been published:
+python scripts/01_ingest_bronze.py --output-root "/path/to/lake" --sample-size 50000 --seed 42
+
+# 2. Bronze -> Silver V1 (requires an existing source manifest):
+python scripts/02_build_silver.py --manifest-name "source_manifest_YOUR_SNAPSHOT.json"
+
+# 3. Silver V1 -> Gold V1:
+python scripts/05_build_gold.py --report-name "silver_quality_v1_YOUR_SNAPSHOT.json"
+
+# 4. Silver V1 -> Silver V2: inspect first, then publish intentionally:
+python scripts/09_build_silver_v2.py --report-name "silver_quality_v1_YOUR_SNAPSHOT.json" --dry-run
+# To publish, repeat without --dry-run after reviewing the output.
+
+# 5. Published Silver V2 -> Gold V2:
+python scripts/10_build_gold_v2.py --data-lake-root "/path/to/lake" \
+  --report-name "silver_quality_v2_YOUR_SNAPSHOT.json"
+```
+
+All steps verify their sources and use versioned outputs. Some already-published targets are reusable after verification; partial or conflicting publications deliberately raise errors. **Do not delete shared outputs simply to bypass these checks.** The Bronze ingestion may require internet access and the optional `data` dependencies. See [scripts guide](scripts/README.md), [Silver documentation](src/vietnamese_topic_classification/data/silver/README.md), [Gold V1 documentation](src/vietnamese_topic_classification/data/gold/README.md) and [Gold V2 documentation](docs/GOLD_V2.md).
+
+## Modeling and evaluation
+
+The shared factory `src/vietnamese_topic_classification/training/factory.py` creates an **unfitted** scikit-learn pipeline: `TfidfVectorizer` (default word 1–2-grams, `min_df=2`, experiment-configured maximum features) followed by `LogisticRegression` or `LinearSVC`. Logistic Regression supports multiclass probability predictions; LinearSVC provides decision scores, not probabilities.
+
+To train **one** experiment from an existing Gold V2 manifest:
+
+```bash
+python -m pip install -e ".[modeling]"
+python scripts/06_train_baseline.py \
+  --data-lake-root "/path/to/lake" \
+  --manifest-name "gold_manifest_v2_YOUR_SNAPSHOT.json" \
+  --output-root "/path/to/lake/experiments/tfidf_baselines_v2" \
+  --name "tfidf_logreg_v2_trial" \
+  --classifier logistic_regression \
+  --class-weight none --max-features 100000 --min-df 2 --seed 42
+```
+
+For LinearSVC, use `--classifier linear_svc` and a **different** experiment name. Use the V1 manifest and `tfidf_baselines_v1` output directory for V1. A completed experiment is linked to its Gold manifest/configuration and cannot silently be overwritten by a mismatched run.
+
+- **Selection:** Compare validation Macro-F1, per-class F1 and accuracy; optionally generate diagnostics with `scripts/08_plot_diagnostics.py` or the notebook option `RUN_DIAGNOSTICS=True` (can require costly refits).
+- **Final test:** After choosing the model on validation, run `python scripts/07_evaluate_model.py --artifact-dir "/path/to/lake/experiments/tfidf_baselines_v2/tfidf_logreg_v2_trial" --data-lake-root "/path/to/lake"`. This writes a **single, write-once** `test_metrics.json` and refuses to overwrite an existing report.
+- **Interpretation:** Do not use the test set repeatedly for tuning. V1/V2 scores are not a controlled cleaning comparison without a common fixed evaluation dataset. Inspect domain balance and suspected pseudo-label errors.
+
+Detailed usage and notes: [Colab modeling](docs/COLAB_MODELING.md) and [model diagnostics](docs/MODELING_DIAGNOSTICS.md).
+
+## Development and CI
+
+```bash
+python -m pip install -e ".[dev,modeling]"
+ruff check src tests
+pytest -q
+python -m vietnamese_topic_classification --list-domains
+```
+
+[GitHub Actions CI](.github/workflows/ci.yml) runs on pushes and pull requests targeting `main`. It installs the package, checks Ruff, runs offline pytest tests and performs an installed-package CLI smoke check. Synthetic tests verify snapshot readers and pipelines; **CI does not mount collaborators' Drive, perform Google OAuth or validate access to a real cloud lake**. Run the corresponding Colab notebook manually to validate Drive integration.
+
+Keep bulk data, credentials and generated models outside Git. `.gitignore` excludes `.env`, generated lake data, experiment files, checkpoints and common model artifacts.
+
+## Troubleshooting
+
+| Symptom | What to check |
+| --- | --- |
+| `DATA_LAKE_ROOT environment variable is required` | Create `.env` in the working directory or export the variable; confirm the folder exists |
+| Data Lake/manifest/report missing | Correct Google account, Drive sharing permissions, My Drive shortcut/mount path and exact versioned filename |
+| `ModuleNotFoundError` in Colab | Rerun checkout/install cells, restart runtime if necessary, and re-import from the installed branch |
+| Missing `sklearn`/`joblib` | Install `.[modeling]`; `.[dev]` alone does not include ML dependencies |
+| Publication conflict or `.uploading` leftovers | Check source checksums, complete published files and write permissions; do not overwrite/mix V1/V2 snapshots |
+| Slow diagnostics or large Gold grouping | Use CPU with sufficient RAM; turn optional `RUN_DIAGNOSTICS` off, and inspect logs rather than claiming a frozen session succeeded |
+| Score changes between V1 and V2 | Confirm manifest, label mapping, Gold split membership, seed and train/validation protocol before interpreting the delta |
+
+## Documentation and project status
+
+- [Team Colab setup](docs/COLAB_TEAM_SETUP.md)
+- [Silver V2 cleaning](docs/SILVER_V2.md)
+- [Gold V2 and lineage checks](docs/GOLD_V2.md)
+- [Modeling V1/V2](docs/COLAB_MODELING.md)
+- [Notebook index](notebooks/README.md)
+- [Layer data models](src/vietnamese_topic_classification/data/LAYER_MODELS.md)
+
+**Implemented now:** Bronze/Silver V1/Silver V2/Gold V1/Gold V2 pipelines; immutable readers/manifests; TF-IDF + Logistic Regression/LinearSVC baselines; evaluation, diagnostics, Colab notebooks and offline CI tests.
+
+**Not implemented as a production application:** a deployed inference API, web UI, image/video moderation, or Transformer/PhoBERT training. `apps/api` and `apps/web` are placeholders. Some older files such as [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) and [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md) contain planned-stage wording from an earlier phase and should not override the current code/this README.
+
+**License and data rights:** The repository is public but currently has no top-level `LICENSE` file. Do not assume source-code redistribution rights or dataset redistribution rights without checking and adding the appropriate license/permissions. Historical 3K/multi-label annotation material is not part of the current 50K single-label baseline.
