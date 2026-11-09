@@ -30,6 +30,8 @@ Cột `domain` của dataset gốc do **máy** gán (`nvidia/domain-classifier`,
 
 Chạy được trên Colab miễn phí (CPU, ~12 GB RAM). Nếu Drive không mount được hoặc `USE_DRIVE=False`, notebook vẫn chạy ở chế độ không Drive: lưu vào `/content/label_survey_outputs/`, **bỏ qua** phần so sánh với Bronze 50k (ghi rõ "bỏ qua" trong báo cáo, không coi như bằng nhau) và không loại được ID Bronze khỏi mẫu.
 
+**Data Lake chỉ có quyền xem (Viewer):** không sao. Data Lake chỉ được đọc (Bronze/Silver/Gold). Notebook thử tạo một file tạm để biết có ghi được vào `<lake>/04_reports/label_survey/` không; nếu không thì tự lưu kết quả và cache vào `My Drive/label_survey_outputs/` của bạn (rồi mới tới `/content`), và in ra lý do chọn. Có thể ép bằng `OUTPUT_ROOT_OVERRIDE` trong cell cấu hình.
+
 **Chạy lại:** cùng cấu hình thì bỏ qua phần đã xong (cache). Thư mục kết quả có `_COMPLETE.json` thì **không bao giờ bị ghi đè**, chỉ đóng zip lại. Chưa hoàn tất thì chạy tiếp các bước còn thiếu.
 
 **Local / test:** `python -m pip install -e ".[dev,survey]"`, `pytest -q tests/test_label_survey_*.py`. Test chạy offline bằng parquet giả; chính các cell của notebook (trừ clone/pip/mount Drive) được chạy trên dữ liệu giả trong `tests/test_label_survey_notebook.py`.

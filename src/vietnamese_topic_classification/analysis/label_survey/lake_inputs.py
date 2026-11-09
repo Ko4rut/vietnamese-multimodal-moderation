@@ -115,3 +115,52 @@ def snapshot_label_counts(lake_root: Path, *, log: Callable[[str], None] = print
                                          "reason": f"{type(exc).__name__}: {exc}"}
             log(f"  bỏ qua {kind} {key}: {type(exc).__name__}: {exc}")
     return results
+
+
+def is_writable_dir(path: Path) -> bool:
+    """True if files can really be created (and removed) under ``path``.
+
+    A Data Lake shared as "Viewer" can be read but not written; creating a probe
+    file is the only reliable test, because the folder may look normal otherwise.
+    """
+    probe = Path(path) / ".write_probe"
+    try:
+        Path(path).mkdir(parents=True, exist_ok=True)
+        probe.write_text("ok", encoding="utf-8")
+        ok = probe.read_text(encoding="utf-8") == "ok"
+        probe.unlink()
+        return ok
+    except OSError:
+        return False
+
+
+def choose_output_root(
+    data_lake_root: Path | None,
+    my_drive: Path | None,
+    local_fallback: Path,
+    *,
+    override: str | Path | None = None,
+) -> tuple[Path, str]:
+    """Pick where results are written; the Data Lake itself is only ever read.
+
+    Order: explicit override, ``<lake>/04_reports/label_survey`` (only if writable),
+    ``<MyDrive>/label_survey_outputs`` (your own Drive), then the Colab local disk.
+    Returns ``(path, human-readable reason)``.
+    """
+    if override:
+        root = Path(override).expanduser()
+        if is_writable_dir(root):
+            return root, "OUTPUT_ROOT_OVERRIDE"
+        raise OSError(f"Không ghi được vào OUTPUT_ROOT_OVERRIDE: {root}")
+    if data_lake_root is not None:
+        root = Path(data_lake_root) / "04_reports" / "label_survey"
+        if is_writable_dir(root):
+            return root, "Data Lake có quyền ghi"
+    if my_drive is not None:
+        root = Path(my_drive) / "label_survey_outputs"
+        if is_writable_dir(root):
+            reason = "My Drive của bạn"
+            if data_lake_root is not None:
+                reason += " (Data Lake chỉ có quyền xem nên không ghi vào đó được)"
+            return root, reason
+    return Path(local_fallback), "ổ đĩa tạm của Colab /content (mất khi ngắt kết nối)"

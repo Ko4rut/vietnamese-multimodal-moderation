@@ -46,6 +46,7 @@ SEED = 42
 
 USE_DRIVE = True                # False: chỉ lưu vào /content, bỏ qua phần so sánh với Bronze 50k
 BRONZE_MANIFEST_NAME = None     # None: tự tìm (ưu tiên bản 50k, seed 42) và in ra bản đã chọn
+OUTPUT_ROOT_OVERRIDE = None     # None: tự chọn nơi lưu kết quả (xem mục 3); hoặc đặt đường dẫn thư mục bạn ghi được
 
 SURVEY_TARGET_ROWS = 300_000    # số bài muốn lấy cho mẫu khảo sát ngẫu nhiên
 MAX_DOWNLOAD_GB = 4.0           # trần dung lượng tải, tới trần thì dừng lấy thêm
@@ -135,15 +136,17 @@ print("Python:", sys.version.split()[0], "| số nhãn chuẩn:", len(get_domain
 
 DRIVE = '''from pathlib import Path
 
-DRIVE_OK = False
+MOUNT = "/content/vtsnlp_drive"
+MOUNTED = False      # Drive đã mount được chưa
+DRIVE_OK = False     # đã tìm thấy Data Lake để ĐỌC chưa
 DATA_LAKE_ROOT = None
 if USE_DRIVE:
     try:
         from google.colab import drive
         from vietnamese_topic_classification.data.colab_lake import resolve_mounted_lake
 
-        MOUNT = "/content/vtsnlp_drive"
         drive.mount(MOUNT)   # Colab sẽ hỏi quyền: chọn đúng tài khoản có Data Lake rồi bấm Allow
+        MOUNTED = True
         DATA_LAKE_ROOT = resolve_mounted_lake(MOUNT)
         DRIVE_OK = True
         print("Data Lake:", DATA_LAKE_ROOT)
@@ -154,12 +157,19 @@ if USE_DRIVE:
 else:
     print("USE_DRIVE=False: chạy không Drive (bỏ qua so sánh với Bronze 50k).")
 
-OUTPUT_ROOT = (
-    DATA_LAKE_ROOT / "04_reports" / "label_survey" if DRIVE_OK
-    else Path("/content/label_survey_outputs")
+from vietnamese_topic_classification.analysis.label_survey.lake_inputs import choose_output_root
+
+# Data Lake chỉ được ĐỌC. Kết quả ghi vào nơi bạn có quyền ghi (Data Lake nếu ghi được,
+# nếu không thì My Drive của bạn, cuối cùng là /content).
+OUTPUT_ROOT, OUTPUT_REASON = choose_output_root(
+    DATA_LAKE_ROOT,
+    Path(MOUNT) / "MyDrive" if MOUNTED else None,
+    Path("/content/label_survey_outputs"),
+    override=OUTPUT_ROOT_OVERRIDE,
 )
 print("Thư mục kết quả:", OUTPUT_ROOT)
-if not DRIVE_OK:
+print("  lý do chọn:", OUTPUT_REASON)
+if str(OUTPUT_ROOT).startswith("/content"):
     print("⚠️ /content bị xóa khi Colab ngắt kết nối: hãy tải file zip về ngay khi xong.")'''
 
 BRONZE = '''from vietnamese_topic_classification.analysis.label_survey.lake_inputs import (
@@ -326,7 +336,7 @@ def cells() -> list[tuple[str, str, str, list[str]]]:
         ("markdown", "install-md", "## 2. Cài đặt\n\nClone repo theo `GIT_REF`, cài các thư viện phân tích nhẹ (`pip install -e \".[survey]\"`) và nạp lại module để Colab dùng đúng phiên bản code.", []),
         ("code", "clone", CLONE, ["colab-only"]),
         ("code", "install", INSTALL, ["colab-only"]),
-        ("markdown", "drive-md", "## 3. Google Drive và thư mục kết quả\n\nColab sẽ hỏi quyền Google Drive: chọn **đúng tài khoản có Data Lake** rồi bấm Allow. Nếu mount lỗi hoặc `USE_DRIVE=False`, notebook vẫn chạy tiếp ở chế độ không Drive (kèm cảnh báo, và bỏ qua phần so sánh với Bronze 50k).\n\nKết quả ghi vào `04_reports/label_survey/<run_id>/`; cache nằm ở `04_reports/label_survey/_cache/`. **Không ghi đè** Bronze/Silver/Gold/experiments.", []),
+        ("markdown", "drive-md", "## 3. Google Drive và thư mục kết quả\n\nColab sẽ hỏi quyền Google Drive: chọn **đúng tài khoản có Data Lake** rồi bấm Allow. Nếu mount lỗi hoặc `USE_DRIVE=False`, notebook vẫn chạy tiếp ở chế độ không Drive (kèm cảnh báo, và bỏ qua phần so sánh với Bronze 50k).\n\nData Lake chỉ được **đọc**. Kết quả ghi vào `04_reports/label_survey/<run_id>/` nếu Data Lake cho phép ghi; nếu Data Lake chỉ có quyền xem (Viewer) thì tự chuyển sang `My Drive/label_survey_outputs/` của bạn (hoặc `/content`). Cache nằm cạnh thư mục kết quả. **Không ghi đè** Bronze/Silver/Gold/experiments.", []),
         ("code", "drive", DRIVE, ["colab-only"]),
         ("code", "bronze", BRONZE, ["colab-only"]),
         ("code", "build-run", BUILD, []),

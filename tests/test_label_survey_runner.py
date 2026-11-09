@@ -196,3 +196,31 @@ def test_snapshot_counts_report_unreadable_snapshots_instead_of_crashing(tmp_pat
     result = lake_inputs.snapshot_label_counts(tmp_path, log=lambda *_: None)
     (entry,) = result.values()
     assert entry["status"] == "unavailable" and "SilverReportError" in entry["reason"]
+
+
+def test_output_root_avoids_a_read_only_data_lake(tmp_path, monkeypatch) -> None:
+    lake, my_drive, local = tmp_path / "lake", tmp_path / "MyDrive", tmp_path / "local"
+    lake.mkdir(), my_drive.mkdir()
+    # writable lake -> results go next to the other reports
+    root, why = lake_inputs.choose_output_root(lake, my_drive, local)
+    assert root == lake / "04_reports" / "label_survey" and "Data Lake" in why
+    # "Viewer" share: creating files fails with an OSError -> fall back to My Drive
+    real_write = Path.write_text
+
+    def viewer_only(self, *args, **kwargs):
+        if str(self).startswith(str(lake)):
+            raise PermissionError("read-only share")
+        return real_write(self, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "write_text", viewer_only)
+    fresh_lake = lake / "other"
+    fresh_lake.mkdir()
+    root, why = lake_inputs.choose_output_root(fresh_lake, my_drive, local)
+    assert root == my_drive / "label_survey_outputs" and "chỉ có quyền xem" in why
+    # nothing writable except the local disk
+    assert lake_inputs.choose_output_root(None, None, local)[0] == local
+    assert lake_inputs.choose_output_root(fresh_lake, None, local)[0] == local
+    # an explicit override wins; an unwritable override is an error, not a silent fallback
+    assert lake_inputs.choose_output_root(fresh_lake, my_drive, local, override=my_drive / "x")[0] == my_drive / "x"
+    with pytest.raises(OSError, match="OUTPUT_ROOT_OVERRIDE"):
+        lake_inputs.choose_output_root(fresh_lake, my_drive, local, override=fresh_lake / "y")
