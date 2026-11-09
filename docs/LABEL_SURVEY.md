@@ -72,7 +72,9 @@ Run id: `survey_<rev8>_seed<SEED>_n<rows>_<confighash8>`. `confighash8` là hash
 | Đọc parquet từ Hugging Face, đếm cột `domain`, lấy mẫu row group | **Viết mới** (`hf_parquet.py`) | Chưa có |
 | Cặp lẫn, dendrogram, nghi gán sai, kịch bản, audit pack, báo cáo, runner | **Viết mới** | Chưa có |
 
-Không sửa file cũ nào ngoài: `pyproject.toml` (thêm extra `survey`), `.github/workflows/ci.yml` (cài thêm extra `survey`), hai `README` (thêm mục). `ruff check src tests` và toàn bộ test cũ vẫn xanh.
+Không sửa file cũ nào ngoài: `pyproject.toml` (thêm extra `survey`) và hai `README` (thêm mục). `ruff check src tests` và toàn bộ test cũ vẫn xanh.
+
+**Việc còn lại cho CI (cần quyền `workflow`):** để CI chạy các test `test_label_survey_*`, đổi bước cài đặt trong `.github/workflows/ci.yml` từ `.[dev,modeling]` thành `.[dev,modeling,survey]`. Khi chưa đổi, các test này tự `skip` (không làm CI đỏ) vì thiếu pandas/pyarrow.
 
 ## 5. Các bước và file kết quả
 
