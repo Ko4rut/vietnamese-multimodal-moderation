@@ -433,7 +433,7 @@ def scan_label_counts(
     started = time.perf_counter()
     results: dict[int, dict[str, Any]] = {}
     errors: list[str] = []
-    done = 0
+    done = fresh = 0
     with ThreadPoolExecutor(max_workers=max(1, workers)) as pool:
         futures = {
             pool.submit(_count_one_file, source, info, directory / f"{info.name}.json"): info
@@ -447,9 +447,11 @@ def scan_label_counts(
                 errors.append(f"{info.name}: {type(exc).__name__}: {exc}")
                 continue
             done += 1
-            if done % 10 == 0 or done == len(infos):
-                elapsed = time.perf_counter() - started
-                _log(f"  đã đếm {done}/{len(infos)} file ({elapsed:,.0f}s)")
+            if not results[info.index].get("from_cache"):
+                fresh += 1
+                if fresh % 10 == 0 or done == len(infos):
+                    elapsed = time.perf_counter() - started
+                    _log(f"  đã đếm {done}/{len(infos)} file ({elapsed:,.0f}s)")
     if errors:
         raise RuntimeError(
             f"{len(errors)} file lỗi khi đếm nhãn (các file đã xong được cache, chạy lại để "
@@ -682,6 +684,7 @@ def fetch_sample(
         _log(f"  mẫu: lô {number + 1}/{len(batches)} xong ({elapsed:,.0f}s)")
 
     frame = pd.concat(frames, ignore_index=True) if frames else pd.DataFrame()
+    frames.clear()  # free the per-batch copies before the final dedup/truncation
     before = len(frame)
     frame = frame.drop_duplicates(subset="id", keep="first").reset_index(drop=True)
     stats = dict(totals)

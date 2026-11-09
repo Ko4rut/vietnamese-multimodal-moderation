@@ -200,7 +200,7 @@ SECTIONS = [
         "khoảng 1 KB mỗi nhóm 1.000 bài), kèm bảng metadata của dataset.\n\n"
         "**Đọc kết quả:** `pct` là % bài của nhãn. Kiểm tra bảng có dòng `unknown`/`null_value`/`empty_value` "
         "hay nhãn `Adult` không. Heatmap theo vị trí file cho biết dữ liệu có bị xếp theo nhãn/nguồn không; "
-        "nếu có, mẫu lấy từ vài file đầu (như Bronze) sẽ bị lệch.",
+        "nếu có, mẫu lấy từ ít shard (như Bronze) sẽ bị lệch.",
         "run.step_full_counts()\n"
         "display(run.table('dataset_metadata').describe().round(1))\n"
         "display(run.table('full_label_counts'))\n"
@@ -210,7 +210,7 @@ SECTIONS = [
     (
         "## 5. Mẫu Bronze 50k có đại diện cho toàn bộ không?\n\n"
         "**Để làm gì:** so phân bổ nhãn của Bronze 50k (và Silver/Gold nếu đọc được) với toàn bộ dataset. "
-        "Bronze lấy bằng bộ đệm xáo 10.000 dòng nên thực chất đến từ vài file đầu, không phải mẫu ngẫu nhiên.\n\n"
+        "Bronze lấy bằng bộ đệm xáo 10.000 dòng nên thực chất chỉ đến từ rất ít shard (mỗi shard ~92.000 bài), không phải mẫu ngẫu nhiên trên toàn bộ dataset.\n\n"
         "**Đọc kết quả:** `diff_pct_points` là chênh lệch tính bằng điểm %. TVD (total variation distance) "
         "là tổng độ chênh chia đôi: 0 là giống hệt, 1 là hoàn toàn khác. Kiểm định chi-square với n lớn gần như "
         "luôn cho p rất nhỏ, nên **nhìn độ chênh là chính**. Nếu không có Drive, phần này được ghi rõ là \"bỏ qua\".",

@@ -9,6 +9,7 @@ rewritten; ``finalize`` then only re-zips it.
 
 from __future__ import annotations
 
+import gc
 import importlib.metadata
 import json
 import platform
@@ -262,6 +263,11 @@ class SurveyRun:
 
     # ------------------------------------------------------------ 5.3 the sample
 
+    def _release_sample(self) -> None:
+        """Drop the in-memory sample (it is reloaded from its parquet cache on demand)."""
+        self._sample = None
+        gc.collect()
+
     @property
     def sample(self) -> pd.DataFrame:
         if self._sample is None:
@@ -370,6 +376,9 @@ class SurveyRun:
             vectorizer, X = confusion.vectorize(subset["text"].tolist(), self.cfg, self.cfg.text_char_limit)
             self.log(f"  TF-IDF xong: {X.shape[0]:,} bài × {X.shape[1]:,} đặc trưng "
                      f"({time.perf_counter() - t0:,.0f}s)")
+            ids = subset["id"].tolist()
+            del subset
+            self._release_sample()  # the 300k-article frame is not needed while fitting
             if (cache / "oof_proba.npy").is_file():
                 proba = np.load(cache / "oof_proba.npy")
                 self.log("  dùng lại xác suất out-of-fold đã cache.")
@@ -377,7 +386,7 @@ class SurveyRun:
                 proba = confusion.oof_probabilities(X, y, len(classes), self.cfg, label="đầy đủ")
                 cache.mkdir(parents=True, exist_ok=True)
                 np.save(cache / "oof_proba.npy", proba)
-            oof = confusion.oof_frame(subset["id"].tolist(), y, proba, classes)
+            oof = confusion.oof_frame(ids, y, proba, classes)
             cosine = confusion.centroid_cosine(X, y, len(classes))
             terms = profiling.top_terms_by_label(X, y, vectorizer.get_feature_names_out(), classes)
             self._save_csv(terms, "top_terms_by_label")
@@ -385,7 +394,7 @@ class SurveyRun:
             oof.to_parquet(cache / "oof.parquet", index=False)
             np.save(cache / "centroid_cosine.npy", cosine)
             report.write_json(cache / "classes.json", {"classes": classes, "skipped": skipped})
-            return {"model_setup": {"n_docs": int(len(subset)), "n_classes": len(classes),
+            return {"model_setup": {"n_docs": len(ids), "n_classes": len(classes),
                                     "skipped_small_labels": skipped, "tfidf_features": int(X.shape[1])}}
 
         self._step("model", "10–30 phút lần đầu trên Colab CPU (5 lần fit Logistic Regression); "
@@ -416,6 +425,8 @@ class SurveyRun:
                 proba = np.load(cache)
             else:
                 _v, X = confusion.vectorize(subset["text"].tolist(), self.cfg, self.cfg.head_chars)
+                del subset
+                self._release_sample()
                 proba = confusion.oof_probabilities(X, y, len(classes), self.cfg, label="đầu bài")
                 np.save(cache, proba)
             pred = proba.argmax(axis=1)
