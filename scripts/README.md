@@ -52,3 +52,7 @@ It mounts the correct Drive account, verifies the existing Silver snapshot,
 checks for conflicting immutable Gold files, runs `scripts/05_build_gold.py`
 and verifies the completed Gold dataset. Install just the base package; Gold
 needs neither the `data` nor the `eda` dependency extras.
+
+## Label survey notebook
+
+`python scripts/11_generate_label_survey_notebook.py` regenerates `notebooks/v2/eda/02_label_survey_colab.ipynb` (`--check` verifies it is up to date). Install `python -m pip install -e ".[dev,survey]"` to run the survey package and its tests. See `docs/LABEL_SURVEY.md`.
