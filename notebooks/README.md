@@ -14,4 +14,6 @@ Individual V1 stage notebooks: [Bronze](v1/colab_runner.ipynb), [Silver](v1/cola
 
 ## Label survey (EDA, read-only)
 
+[Báo cáo kết quả khảo sát dataset gốc — mẫu 300k, seed 42](reports/label_survey_b81fcce5_seed42_n300000.ipynb) chứa các bảng tổng hợp và 10 biểu đồ nhúng sẵn. Mở xem trực tiếp, không cần chạy lại, cài thư viện hay tải CSV/dataset. Đây là bản kết quả tĩnh của run `survey_b81fcce5_seed42_n300000_69445d1c`; bộ kết quả chi tiết được giữ ngoài Git.
+
 [Label survey (Colab)](v2/eda/02_label_survey_colab.ipynb) khảo sát nhãn `domain` do máy gán của dataset gốc: phân bổ nhãn trên toàn bộ ~12,2 triệu bài, độ đại diện của Bronze 50k, cặp nhãn dễ lẫn (out-of-fold), nghi gán sai, kịch bản gộp/bỏ nhãn "nếu thì" và bộ bài để người đọc kiểm tra tay. **Runtime → Run all** là đủ; kết quả tự đóng zip và tải về. Notebook chỉ tạo bằng chứng, không quyết định nhãn nào giữ/gộp/bỏ và không ghi vào Bronze/Silver/Gold/experiments. Xem [docs/LABEL_SURVEY.md](../docs/LABEL_SURVEY.md). Notebook được sinh bởi `scripts/11_generate_label_survey_notebook.py`.
