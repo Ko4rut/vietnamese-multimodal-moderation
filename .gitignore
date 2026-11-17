@@ -25,3 +25,5 @@ models/
 *.safetensors
 *.onnx
 .DS_Store
+node_modules/
+.vite/
