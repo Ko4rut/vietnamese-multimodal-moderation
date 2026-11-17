@@ -50,6 +50,7 @@ vietnamese_topic_classification = ["config/*.yaml"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["."]
 
 [tool.ruff]
 target-version = "py310"
