@@ -83,8 +83,8 @@ Pinned VTSNLP source
 .
 ├── .github/workflows/ci.yml            # Ruff, pytest, installed-package smoke check
 ├── .env.example                        # DATA_LAKE_ROOT template (no credentials)
-├── apps/api/                            # Future API placeholder, not a working service
-├── apps/web/                            # Future web UI placeholder
+├── apps/api/                            # Local FastAPI real-model inference adapter
+├── apps/web/                            # Vite/React text topic model demo
 ├── docs/                                # Guides, experiment notes, historical documents
 ├── notebooks/
 │   ├── v1/                              # Bronze -> Silver V1 -> Gold V1 -> Modeling V1
@@ -317,6 +317,34 @@ Keep bulk data, credentials and generated models outside Git. `.gitignore` exclu
 
 **Implemented now:** Bronze/Silver V1/Silver V2/Gold V1/Gold V2 pipelines; immutable readers/manifests; TF-IDF + Logistic Regression/LinearSVC baselines; evaluation, diagnostics, Colab notebooks and offline CI tests.
 
-**Not implemented as a production application:** a deployed inference API, web UI, image/video moderation, or Transformer/PhoBERT training. `apps/api` and `apps/web` are placeholders. Some older files such as [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) and [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md) contain planned-stage wording from an earlier phase and should not override the current code/this README.
+**Not implemented as a production application:** a deployed/hosted API, image/video moderation, or Transformer/PhoBERT training. A local FastAPI inference demo and React UI now exist under `apps/api` and `apps/web`; both require a trained local model artifact. Some older files such as [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) and [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md) contain planned-stage wording from an earlier phase and should not override the current code/this README.
 
 **License and data rights:** The repository is public but currently has no top-level `LICENSE` file. Do not assume source-code redistribution rights or dataset redistribution rights without checking and adding the appropriate license/permissions. Historical 3K/multi-label annotation material is not part of the current 50K single-label baseline.
+
+## Local model inference demo (React + FastAPI)
+
+A real-model demo is available under [apps/web](apps/web/README.md) and
+[apps/api](apps/api/README.md). This UI supports **only Vietnamese text topic
+classification**, not moderation or image/video inputs. It needs an existing,
+trusted trained experiment on the computer running the API; GitHub does not
+ship the large model files. Run these commands from the repository root:
+
+```bash
+python -m pip install -e ".[modeling,api]"
+export VTC_MODEL_DIR="/path/to/lake/experiments/tfidf_baselines_v2/<experiment-name>"
+uvicorn apps.api.main:app --host 127.0.0.1 --port 8000
+```
+
+Then, from a second terminal:
+
+```bash
+cd apps/web
+npm install
+npm run dev
+```
+
+Open http://localhost:5173. API health: http://localhost:8000/api/health;
+model readiness: http://localhost:8000/api/status. If `VTC_MODEL_DIR` is
+not set, API/status reports `ready=false`, and the frontend will **not**
+produce any fake predictions. For LinearSVC, values are raw decision margins,
+not probabilities. See the app READMEs for details and limitations.

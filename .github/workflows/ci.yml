@@ -15,10 +15,25 @@ jobs:
         with:
           python-version: "3.11"
       - name: Install package and test dependencies
-        run: python -m pip install -e ".[dev,modeling]"
+        run: python -m pip install -e ".[dev,modeling,api]"
       - name: Lint
-        run: ruff check src tests
+        run: ruff check src apps/api tests
       - name: Run unit tests (offline)
         run: pytest -q
       - name: Check installed package CLI
         run: python -m vietnamese_topic_classification --list-domains
+
+  web:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install web dependencies
+        run: npm install --no-audit --no-fund
+      - name: Type-check and build web
+        run: npm run build
