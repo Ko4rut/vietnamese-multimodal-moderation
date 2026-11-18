@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import "@/features/prediction/components/prediction-chart.css";
 
 export const metadata: Metadata = {
   title: "VietTopic AI — Phân loại chủ đề tiếng Việt",

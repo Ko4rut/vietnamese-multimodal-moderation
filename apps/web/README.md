@@ -2,7 +2,7 @@
 
 A responsive, component-based **Next.js 16 / React 19 / TypeScript / Tailwind CSS 4** UI for the repository's Vietnamese **single-label, 25-domain text classifier**.
 
-The web app calls the existing FastAPI inference service. **No fake AI scores are generated.** If the model or API is unavailable, the page shows its offline state; the example text and reference list of domain labels still work. Logistic Regression scores are shown as probability estimates, while LinearSVC scores are clearly marked as decision margins.
+The web app calls the existing FastAPI inference service. **No fake AI scores are generated.** If the model or API is unavailable, the page shows its offline state; the example text and reference list of domain labels still work. A staggered animated vertical bar chart renders the API's top 5 labels; Logistic Regression heights use real probabilities while LinearSVC heights use relative ranking and display the original signed decision margins. No mocked prediction scores are generated.
 
 ## Run locally
 
@@ -56,6 +56,8 @@ src/
         ├── demo-dashboard.tsx
         ├── text-input-panel.tsx
         ├── prediction-panel.tsx
+        ├── prediction-bar-chart.tsx
+        ├── prediction-chart.css
         ├── model-status-card.tsx
         └── domain-browser.tsx
 ```

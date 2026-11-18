@@ -3,65 +3,49 @@
 import { useState } from "react";
 import { Icon } from "@/components/ui/icon";
 import { displayDomain } from "../data/domains";
-import type { Prediction, RankedPrediction } from "../types";
+import type { Prediction } from "../types";
+import { formatPredictionScore, PredictionBarChart } from "./prediction-bar-chart";
 
 interface PredictionPanelProps {
   result: Prediction | null;
   busy: boolean;
 }
 
-function formatScore(score: number, probability: boolean): string {
-  return probability ? (score * 100).toFixed(1) + "%" : score.toFixed(3);
-}
-
-function ScoreRow({ item, rank, probability, min, max }: {
-  item: RankedPrediction;
-  rank: number;
-  probability: boolean;
-  min: number;
-  max: number;
-}) {
-  const width = probability
-    ? Math.max(0, Math.min(100, item.score * 100))
-    : max === min ? 100 : Math.max(5, ((item.score - min) / (max - min)) * 100);
-  return (
-    <div className="score-row">
-      <div className="score-line">
-        <div className="score-name"><span className="score-rank">{String(rank).padStart(2, "0")}</span><span title={item.label}>{displayDomain(item.label)}</span></div>
-        <span className="score-value">{formatScore(item.score, probability)}</span>
-      </div>
-      <div className="score-track"><div className={"score-fill" + (rank === 1 ? " best" : "")} style={{ width: width + "%" }} /></div>
-    </div>
-  );
-}
-
 export function PredictionPanel({ result, busy }: PredictionPanelProps) {
-  const [copied, setCopied] = useState(false);
-  const probability = result?.score_kind === "probability";
+  const [lastCopied, setLastCopied] = useState<string | null>(null);
+  const scoreKind = result?.score_kind ?? "probability";
+  const probability = scoreKind === "probability";
   const scores = result?.top_predictions ?? [];
-  const min = Math.min(...scores.map((item) => item.score));
-  const max = Math.max(...scores.map((item) => item.score));
+  const winner = scores.find((item) => item.label_id === result?.label_id);
+  const copyKey = result
+    ? JSON.stringify([result.model_name, result.label_id, result.score_kind, scores])
+    : null;
 
   async function copyResult() {
-    if (!result) return;
+    if (!result || !copyKey) return;
     const summary = [
       "Chủ đề dự đoán: " + displayDomain(result.label) + " (" + result.label + ")",
       "Mô hình: " + result.model_name,
       "Kiểu điểm: " + (probability ? "Xác suất" : "Decision margin"),
-      ...result.top_predictions.map((item, i) => String(i + 1) + ". " + item.label + ": " + formatScore(item.score, probability)),
+      ...scores.map((item, index) =>
+        String(index + 1) + ". " + item.label + ": " +
+        formatPredictionScore(item.score, scoreKind),
+      ),
     ].join("\n");
+
     try {
       await navigator.clipboard.writeText(summary);
-      setCopied(true);
+      setLastCopied(copyKey);
     } catch {
-      setCopied(false);
+      setLastCopied(null);
     }
   }
 
   return (
     <section className="panel result-panel" aria-labelledby="result-heading">
       <div className="panel-heading">
-        <div className="section-title-group"><span className="panel-icon purple"><Icon name="brain" size={20}/></span>
+        <div className="section-title-group">
+          <span className="panel-icon purple"><Icon name="brain" size={20}/></span>
           <div><h3 id="result-heading">Kết quả phân tích</h3><p>Dự đoán trực tiếp từ mô hình</p></div>
         </div>
         <span className="result-live-tag"><span className="mini-dot"/> INFERENCE</span>
@@ -74,36 +58,62 @@ export function PredictionPanel({ result, busy }: PredictionPanelProps) {
             <span className="result-slug">{result.label}</span>
             <div className="result-primary-footer">
               <span><Icon name="target" size={16}/> Phân loại đơn nhãn</span>
-              <span className="result-main-score">{scores.length && scores[0].label_id === result.label_id
-                ? formatScore(scores[0].score, probability)
-                : "#" + result.label_id}</span>
+              <span className="result-main-score">
+                {winner ? formatPredictionScore(winner.score, scoreKind) : "#" + result.label_id}
+              </span>
             </div>
           </div>
 
-          <div className="ranking-header"><div><h4>Top {scores.length} chủ đề</h4><p>{probability ? "Xác suất dự đoán" : "Điểm quyết định của mô hình"}</p></div>
-            <button className="copy-button" type="button" onClick={() => void copyResult()}><Icon name={copied ? "check" : "copy"} size={16}/>{copied ? "Đã sao chép" : "Sao chép"}</button>
+          <div className="ranking-header">
+            <div>
+              <h4>Biểu đồ dự đoán · Top {scores.length} nhãn</h4>
+              <p>{probability ? "Xác suất của các chủ đề" : "Điểm quyết định của các chủ đề"}</p>
+            </div>
+            <button className="copy-button" type="button" onClick={() => void copyResult()}>
+              <Icon name={lastCopied === copyKey ? "check" : "copy"} size={16}/>
+              {lastCopied === copyKey ? "Đã sao chép" : "Sao chép"}
+            </button>
           </div>
-          <div className="score-list">{scores.map((item, i) => (
-            <ScoreRow key={item.label_id} item={item} rank={i + 1} probability={probability} min={min} max={max}/>
-          ))}</div>
+
+          {scores.length > 0 && (
+            <PredictionBarChart
+              predictions={scores}
+              scoreKind={scoreKind}
+              selectedLabelId={result.label_id}
+            />
+          )}
+
           <div className="result-note"><Icon name="info" size={16}/><span>
             {probability
               ? "Các giá trị là xác suất do Logistic Regression ước lượng; không bảo đảm độ tin cậy trên mọi dữ liệu thực tế."
-              : "Điểm LinearSVC là decision margin, không phải xác suất. Chiều dài thanh chỉ thể hiện tương quan giữa các điểm."}
+              : "LinearSVC trả về decision margin, không phải xác suất. Không diễn giải điểm hoặc chiều cao cột thành độ tin cậy phần trăm."}
           </span></div>
           <div className="model-footnote">Model: <strong>{result.model_name}</strong></div>
         </div>
       ) : (
         <div className={"result-empty" + (busy ? " is-analyzing" : "")} aria-live="polite">
-          <div className="empty-visual">
-            <div className="empty-ring ring-outer"/><div className="empty-ring ring-inner"/>
-            <div className="empty-core"><Icon name={busy ? "activity" : "sparkles"} size={34}/></div>
-            <span className="orbit-point orbit-a"/><span className="orbit-point orbit-b"/>
+          <div className="prediction-chart-preview" aria-hidden="true">
+            {[32, 54, 77, 48, 62].map((height, index) => (
+              <span
+                className="prediction-chart-preview-bar"
+                key={index}
+                style={{
+                  height: height + "%",
+                  animationDelay: index * 120 + "ms",
+                }}
+              />
+            ))}
           </div>
-          <span className="empty-status">{busy ? "ĐANG XỬ LÝ" : "SẴN SÀNG PHÂN TÍCH"}</span>
-          <h4>{busy ? "AI đang đọc nội dung..." : "Insight bắt đầu từ văn bản"}</h4>
-          <p>{busy ? "Đang nhận kết quả từ mô hình đã huấn luyện." : "Nhập văn bản ở bên trái và nhấn “Phân tích văn bản” để xem chủ đề dự đoán cùng các điểm xếp hạng."}</p>
-          <div className="empty-steps"><span>01 · Nhập văn bản</span><Icon name="arrow-right" size={14}/><span>02 · AI phân tích</span><Icon name="arrow-right" size={14}/><span>03 · Kết quả</span></div>
+          <span className="empty-status">{busy ? "ĐANG XỬ LÝ" : "CHỜ KẾT QUẢ"}</span>
+          <h4>{busy ? "AI đang đọc nội dung..." : "Kết quả sẽ hiện thành biểu đồ"}</h4>
+          <p>{busy
+            ? "Đang nhận điểm số từ mô hình đã huấn luyện."
+            : "Nhập văn bản và nhấn “Phân tích văn bản”. Các cột sẽ bật lên theo điểm của từng nhãn khi có kết quả thực tế."}</p>
+          <div className="empty-steps">
+            <span>01 · Nhập văn bản</span><Icon name="arrow-right" size={14}/>
+            <span>02 · AI phân tích</span><Icon name="arrow-right" size={14}/>
+            <span>03 · Biểu đồ</span>
+          </div>
         </div>
       )}
     </section>
