@@ -35,5 +35,7 @@ jobs:
           node-version: "22"
       - name: Install web dependencies
         run: npm install --no-audit --no-fund
+      - name: Lint web
+        run: npm run lint
       - name: Type-check and build web
         run: npm run build
