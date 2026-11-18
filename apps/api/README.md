@@ -1,46 +1,84 @@
-# Inference API (FastAPI)
+# FastAPI inference service
 
-Text-only inference over the existing 25-domain **single-label** classifier.
-The API does not train models and does not provide image/video moderation.
+This service loads trusted TF-IDF + Logistic Regression / LinearSVC artifacts
+previously trained by the project. It does **not** train or download models.
+Do not upload or commit model.joblib files to GitHub.
 
-## Start
+## Verified artifact layout (Google Drive)
 
-Install from repository root:
+~~~text
+experiments/
+├── tfidf_baselines_v1/
+│   ├── tfidf_logreg_v1_3b778f51b8/
+│   └── tfidf_linear_svc_v1_3b778f51b8/
+└── tfidf_baselines_v2/
+    ├── tfidf_logreg_v2_9ff85ff3a7/
+    └── tfidf_linear_svc_v2_9ff85ff3a7/
+~~~
 
-```bash
-python -m pip install -e ".[modeling,api]"
-```
+Each model folder contains model.joblib, config.json and metadata.json.
+The four real artifacts were trained with **scikit-learn 1.6.1**. Match that
+major/minor version when loading pickle-based artifacts (joblib). Download
+or sync experiment folders onto the host running the API; a path in a Colab
+runtime cannot be read from your Windows PC.
 
-Point `VTC_MODEL_DIR` to **one trusted experiment directory** created by
-`scripts/06_train_baseline.py`; it must contain `model.joblib`,
-`metadata.json`, and `config.json`. Example (replace with your real path):
+## Windows PowerShell: run locally
 
-```bash
-export VTC_MODEL_DIR="/path/to/lake/experiments/tfidf_baselines_v2/<experiment-name>"
-uvicorn apps.api.main:app --host 127.0.0.1 --port 8000
-```
+From the repository root:
 
-On Windows PowerShell, use
-`$env:VTC_MODEL_DIR="G:\\My Drive\\...\\<experiment-name>"`.
-A model stored only in Google Drive/Colab must be synced or mounted on the
-machine running the API; a path inside a remote Colab runtime is not accessible
-by your local computer.
+~~~powershell
+python -m pip install -e ".[api]" "scikit-learn==1.6.1" "joblib>=1.3,<2"
 
-## Endpoints
+# Replace with the actual local path of your synced Drive experiments.
+.\scripts\run_inference_api.ps1 -ModelsRoot "E:\models\experiments" -DefaultModel "tfidf_linear_svc_v2_9ff85ff3a7"
+~~~
 
-- `GET /api/health`: process health (does not mean model is loaded).
-- `GET /api/status`: readiness, model metadata, domain count, validation Macro-F1.
-- `GET /api/labels`: canonical 25-domain label mapping.
-- `POST /api/predict`: `{"text":"Văn bản tiếng Việt"}`, length 3–10,000.
+For a single experiment, use the backward-compatible option:
 
-The response includes the winning domain, five highest-ranked classes, and
-`score_kind`. **Logistic Regression** produces probability estimates;
-**LinearSVC** produces uncalibrated decision margins, **not probabilities**.
-No prediction is made when the model directory is missing or invalid (HTTP 503).
-The server loads the model once per configured directory, so restart after
-replacing its files. Never load untrusted `.joblib` artifacts (pickle execution).
+~~~powershell
+.\scripts\run_inference_api.ps1 -ModelDir "E:\models\experiments\tfidf_baselines_v2\tfidf_logreg_v2_9ff85ff3a7"
+~~~
 
-Local CORS is limited to Vite's two development origins. For production, serve
-the frontend behind a same-origin reverse proxy to `/api`, and add auth/rate
-limits, HTTPS, monitoring and appropriate data privacy controls before
-public exposure.
+Visit http://127.0.0.1:8000/docs (interactive Swagger UI).
+
+## Docker Compose: local container
+
+Docker Desktop must be running. From the repository root:
+
+~~~powershell
+$env:VTC_MODELS_HOST_PATH = "E:\models\experiments"
+$env:VTC_DEFAULT_MODEL = "tfidf_linear_svc_v2_9ff85ff3a7"
+docker compose -f apps/api/compose.yml up --build
+~~~
+
+The mount is read-only. Port 8000 is bound only to localhost.
+
+## API contract
+
+| Method | Route | Purpose |
+|---|---|---|
+| GET | /api/health | Process health, not model readiness |
+| GET | /api/models | Registered model IDs and public metadata |
+| GET | /api/status?model_id=... | Readiness of selected model |
+| GET | /api/labels | Canonical 25 domains |
+| POST | /api/predict | Actual model inference, ranked top 5 |
+
+~~~powershell
+Invoke-RestMethod -Uri "http://127.0.0.1:8000/api/models"
+
+$body = @{ text = "Thị trường chứng khoán tăng điểm."; model_id = "tfidf_linear_svc_v2_9ff85ff3a7" } | ConvertTo-Json
+Invoke-RestMethod -Uri "http://127.0.0.1:8000/api/predict" -Method Post -ContentType "application/json; charset=utf-8" -Body $body
+~~~
+
+The request model_id is optional; defaults to VTC_DEFAULT_MODEL or the first
+registered model. Never pass a file path from the browser. The response includes
+model_id, model_name, label_id, label, score_kind, top_predictions. Logistic
+Regression emits probability estimates, while LinearSVC emits raw decision
+margins; these are **not** percentages. Invalid text returns HTTP 422,
+unknown model_id 404, and unavailable/incompatible artifacts 503.
+
+The Next.js web app already proxies /api/* to localhost:8000. Start the web
+app and choose **AI thực** rather than Mock Preview to test real inference.
+
+Before any public Internet deployment, add HTTPS, authentication, request
+limits, monitoring and a trusted persistent artifact volume.

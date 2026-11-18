@@ -1,0 +1,13 @@
+services:
+  inference:
+    build:
+      context: ../..
+      dockerfile: apps/api/Dockerfile
+    ports:
+      - "127.0.0.1:8000:8000"
+    environment:
+      VTC_MODELS_ROOT: /models
+      VTC_DEFAULT_MODEL: ${VTC_DEFAULT_MODEL:-tfidf_linear_svc_v2_9ff85ff3a7}
+    volumes:
+      - ${VTC_MODELS_HOST_PATH:?Set VTC_MODELS_HOST_PATH to your local experiments directory}:/models:ro
+    restart: unless-stopped
