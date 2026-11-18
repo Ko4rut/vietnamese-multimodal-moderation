@@ -2,9 +2,21 @@
 
 A responsive, component-based **Next.js 16 / React 19 / TypeScript / Tailwind CSS 4** UI for the repository's Vietnamese **single-label, 25-domain text classifier**.
 
-The web app calls the existing FastAPI inference service. **No fake AI scores are generated.** If the model or API is unavailable, the page shows its offline state; the example text and reference list of domain labels still work. A staggered animated vertical bar chart renders the API's top 5 labels; Logistic Regression heights use real probabilities while LinearSVC heights use relative ranking and display the original signed decision margins. No mocked prediction scores are generated.
+The web app defaults to **Mock Preview**: four fully typed, static example predictions demonstrate the animated Top-5 bar chart without requiring FastAPI. These values are fabricated UI fixtures, **not** trained-model predictions. Select **AI thực** to call the existing FastAPI inference service instead. Logistic Regression scores use a 0–100% probability scale, while LinearSVC uses relative bar heights with original decision margins shown as numbers.
 
-## Run locally
+## Mock Preview (no backend needed)
+
+From the repository root:
+
+```powershell
+cd apps/web
+npm ci
+npm run dev
+```
+
+Open http://localhost:3000. The first view immediately shows a **MOCK DATA** Top-5 chart. Choose one of the four exact example texts (Công nghệ, Tài chính, Thể thao, Du lịch) to switch between typed fixtures; the button can replay the column animation. Custom text is **never** assigned a pretend classification: choose a fixed example or select **AI thực** for real inference.
+
+## Run locally with real model
 
 At the repository root (PowerShell):
 
@@ -50,12 +62,14 @@ src/
 └── features/prediction/
     ├── api/client.ts              # Typed HTTP calls (same-origin /api)
     ├── hooks/use-prediction.ts     # Inference state and errors
-    ├── data/{examples,domains}.ts
+    ├── data/{examples,domains,mock-predictions}.ts
     ├── types.ts
     └── components/
         ├── demo-dashboard.tsx
         ├── text-input-panel.tsx
+        ├── prediction-mode-switch.tsx
         ├── prediction-panel.tsx
+        ├── mock-preview.css
         ├── prediction-bar-chart.tsx
         ├── prediction-chart.css
         ├── model-status-card.tsx
@@ -71,4 +85,4 @@ npm run lint
 npm run build
 ```
 
-The web currently supports **text only**. Source-domain labels were automatically assigned in VTSNLP and have not all been independently human-verified; validation metrics should be interpreted with this limitation. The UI sends text to the configured API only when the user requests a prediction; do not submit secrets or sensitive personal data to an untrusted deployment.
+Mock Preview never posts example text to the API; switching to **AI thực** enables genuine inference and its status checks. The web currently supports **text only**. Source-domain labels were automatically assigned in VTSNLP and have not all been independently human-verified; validation metrics should be interpreted with this limitation. The UI sends text to the configured API only when the user requests a prediction; do not submit secrets or sensitive personal data to an untrusted deployment.

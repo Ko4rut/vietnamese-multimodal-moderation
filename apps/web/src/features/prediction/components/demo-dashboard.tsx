@@ -58,7 +58,7 @@ export function DemoDashboard() {
               text={text} onTextChange={updateText} onAnalyze={() => void runPrediction()}
               busy={predicting} ready={ready} error={predictionError} mode={mode}
             />
-            <PredictionPanel view={predictionView} busy={predicting} chartRevision={chartRevision} />
+            <PredictionPanel mode={mode} view={predictionView} busy={predicting} chartRevision={chartRevision} />
           </div>
 
           <div className="insight-grid">
