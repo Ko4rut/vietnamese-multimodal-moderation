@@ -14,7 +14,8 @@ import { usePrediction } from "../hooks/use-prediction";
 export function DemoDashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const {
-    mode, changeMode, text, updateText, modelStatus, statusError, domains,
+    mode, changeMode, text, updateText, modelStatus, statusError, models,
+    selectedModelId, selectModel, domains,
     predictionView, chartRevision, predictionError, predicting,
     refreshing, refreshStatus, runPrediction,
   } = usePrediction();
@@ -65,6 +66,7 @@ export function DemoDashboard() {
             <ModelStatusCard
               mode={mode} status={modelStatus} error={statusError}
               refreshing={refreshing} onRefresh={() => void refreshStatus()}
+              models={models} selectedModelId={selectedModelId} onSelectModel={selectModel}
             />
             <section className="panel how-card" aria-labelledby="how-heading">
               <div className="panel-heading compact"><div className="section-title-group"><span className="panel-icon orange"><Icon name="layers" size={19}/></span>

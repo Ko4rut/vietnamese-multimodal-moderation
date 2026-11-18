@@ -1,4 +1,4 @@
-import type { DomainLabel, ModelStatus, Prediction } from "../types";
+import type { DomainLabel, ModelCatalog, ModelStatus, Prediction } from "../types";
 
 async function requestJson<T>(path: string, options: RequestInit = {}): Promise<T> {
   let response: Response;
@@ -28,8 +28,13 @@ async function requestJson<T>(path: string, options: RequestInit = {}): Promise<
   return payload as T;
 }
 
-export function getModelStatus(signal?: AbortSignal): Promise<ModelStatus> {
-  return requestJson<ModelStatus>("status", { signal });
+export function getModelCatalog(signal?: AbortSignal): Promise<ModelCatalog> {
+  return requestJson<ModelCatalog>("models", { signal });
+}
+
+export function getModelStatus(modelId?: string | null, signal?: AbortSignal): Promise<ModelStatus> {
+  const query = modelId ? "?model_id=" + encodeURIComponent(modelId) : "";
+  return requestJson<ModelStatus>("status" + query, { signal });
 }
 
 export async function getDomains(signal?: AbortSignal): Promise<DomainLabel[]> {
@@ -37,10 +42,10 @@ export async function getDomains(signal?: AbortSignal): Promise<DomainLabel[]> {
   return data.labels;
 }
 
-export function predictText(text: string, signal?: AbortSignal): Promise<Prediction> {
+export function predictText(text: string, modelId?: string | null, signal?: AbortSignal): Promise<Prediction> {
   return requestJson<Prediction>("predict", {
     method: "POST",
-    body: JSON.stringify({ text }),
+    body: JSON.stringify({ text, ...(modelId ? { model_id: modelId } : {}) }),
     signal,
   });
 }

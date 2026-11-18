@@ -1,5 +1,6 @@
 import { Icon } from "@/components/ui/icon";
-import { classifierName, type InferenceMode, type ModelStatus } from "../types";
+import { ModelPicker } from "./model-picker";
+import { classifierName, type AvailableModel, type InferenceMode, type ModelStatus } from "../types";
 
 interface ModelStatusCardProps {
   mode: InferenceMode;
@@ -7,10 +8,14 @@ interface ModelStatusCardProps {
   error: string | null;
   refreshing: boolean;
   onRefresh: () => void;
+  models: AvailableModel[];
+  selectedModelId: string | null;
+  onSelectModel: (modelId: string) => void;
 }
 
 export function ModelStatusCard({
   mode, status, error, refreshing, onRefresh,
+  models, selectedModelId, onSelectModel,
 }: ModelStatusCardProps) {
   const mock = mode === "mock";
   const ready = status?.ready === true;
@@ -33,6 +38,7 @@ export function ModelStatusCard({
         <span className={"model-health " + (mock || ready ? "model-healthy" : "model-not-ready")}><span className="status-dot"/>{statusText}</span>
         <span className="model-count">25 lĩnh vực</span>
       </div>
+      {!mock && <ModelPicker models={models} selectedModelId={selectedModelId} onSelectModel={onSelectModel}/>}
       {!mock && (!ready || error) && <p className="model-message">{error ?? status?.message ?? "Đang chờ kết nối đến API..."}</p>}
       {mock && <p className="model-message">Giao diện đang hiển thị các điểm số minh họa cố định, không phải kết quả từ mô hình đã huấn luyện.</p>}
       <div className="model-details">

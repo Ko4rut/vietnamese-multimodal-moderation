@@ -72,6 +72,8 @@ src/
         ├── mock-preview.css
         ├── prediction-bar-chart.tsx
         ├── prediction-chart.css
+        ├── model-picker.tsx
+        ├── model-picker.css
         ├── model-status-card.tsx
         └── domain-browser.tsx
 ```
