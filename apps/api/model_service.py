@@ -10,6 +10,7 @@ import json
 import math
 import os
 import re
+import warnings
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
@@ -118,7 +119,7 @@ def _descriptor_for(directory: Path) -> ModelDescriptor:
         classifier_config = config.get("classifier")
         if not isinstance(name, str) or not MODEL_ID_PATTERN.fullmatch(name):
             raise ValueError("Invalid experiment name")
-        if config.get("name") != name:
+        if config.get("name") is not None and config["name"] != name:
             raise ValueError("Experiment identity mismatch between metadata and config")
         if not isinstance(classifier_config, dict):
             raise ValueError("Missing classifier config")
@@ -126,7 +127,9 @@ def _descriptor_for(directory: Path) -> ModelDescriptor:
         if classifier not in ("logistic_regression", "linear_svc"):
             raise ValueError("Unsupported classifier")
         features = config.get("features")
-        if not isinstance(features, dict) or features.get("kind") != "tfidf":
+        if features is not None and (
+            not isinstance(features, dict) or features.get("kind") != "tfidf"
+        ):
             raise ValueError("Only TF-IDF baselines are supported")
         sklearn_version = metadata.get("sklearn_version")
         if sklearn_version is not None and not isinstance(sklearn_version, str):
@@ -192,9 +195,12 @@ def _resolve_descriptor(model_id: str | None) -> ModelDescriptor:
 def _check_sklearn_version(descriptor: ModelDescriptor) -> None:
     stored = descriptor.sklearn_version
     if stored is None:
-        raise ModelUnavailable(
-            "Artifact thiếu sklearn_version; không thể xác nhận tương thích."
+        warnings.warn(
+            "Artifact has no sklearn_version; compatibility cannot be verified.",
+            RuntimeWarning,
+            stacklevel=2,
         )
+        return
     if stored.split(".")[:2] != sklearn.__version__.split(".")[:2]:
         raise ModelUnavailable(
             "Phiên bản scikit-learn không tương thích: model được train với "
@@ -247,8 +253,9 @@ def get_loaded_model(model_id: str | None = None) -> LoadedModel:
 
 def predict_text(model: LoadedModel, text: str, top_k: int = 5) -> dict[str, object]:
     """Return genuine model rankings; a LinearSVC margin is not a probability."""
-    if not (1 <= top_k <= len(model.classes)):
+    if not (1 <= top_k):
         raise ValueError("top_k is out of range")
+    top_k = min(top_k, len(model.classes))
     labels = get_domain_labels()
     predicted_id = int(model.pipeline.predict([text])[0])
     if predicted_id not in model.classes:
