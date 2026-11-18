@@ -181,3 +181,13 @@ def test_explicit_default_must_exist(tmp_path, monkeypatch):
     monkeypatch.setenv("VTC_DEFAULT_MODEL", "not_registered")
     assert client.get("/api/models").status_code == 503
     assert client.get("/api/status").json()["ready"] is False
+
+
+def test_corrupted_artifact_returns_service_unavailable(tmp_path, monkeypatch):
+    root = make_artifact(tmp_path / "model", "logistic_regression", "broken_model")
+    (root / "model.joblib").write_bytes(b"this is not a fitted sklearn pipeline")
+    monkeypatch.setenv("VTC_MODEL_DIR", str(root))
+    assert client.get("/api/status").json()["ready"] is False
+    response = client.post("/api/predict", json={"text": "Thị trường tài chính"})
+    assert response.status_code == 503
+    assert "Traceback" not in response.text

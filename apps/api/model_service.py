@@ -245,7 +245,9 @@ def get_loaded_model(model_id: str | None = None) -> LoadedModel:
     try:
         pipeline, classes = _load_pipeline(str(descriptor.directory), descriptor.classifier)
         return LoadedModel(descriptor=descriptor, pipeline=pipeline, classes=classes)
-    except (OSError, ValueError, TypeError, AttributeError, EOFError, ImportError) as exc:
+    except Exception as exc:
+        # joblib/pickle can raise many errors for corrupt or incompatible trusted files.
+        # Expose a controlled 503 to clients; never return internal traceback details.
         raise ModelUnavailable(
             f"Không thể load model '{descriptor.model_id}'. Kiểm tra artifact và dependencies."
         ) from exc
