@@ -83,8 +83,11 @@ Pinned VTSNLP source
 .
 ├── .github/workflows/ci.yml            # Ruff, pytest, installed-package smoke check
 ├── .env.example                        # DATA_LAKE_ROOT template (no credentials)
-├── apps/api/                            # Local FastAPI real-model inference adapter
-├── apps/web/                            # Vite/React text topic model demo
+├── apps/api/                            # FastAPI entrypoint (main.py)
+│   ├── route/                           # HTTP handlers and APIRouter
+│   ├── schema/                          # Typed Pydantic contracts
+│   └── service/                         # Registry, loader and real inference
+├── apps/web/                            # Next.js 16 / React 19 AI demo
 ├── docs/                                # Guides, experiment notes, historical documents
 ├── notebooks/
 │   ├── v1/                              # Bronze -> Silver V1 -> Gold V1 -> Modeling V1
@@ -317,11 +320,11 @@ Keep bulk data, credentials and generated models outside Git. `.gitignore` exclu
 
 **Implemented now:** Bronze/Silver V1/Silver V2/Gold V1/Gold V2 pipelines; immutable readers/manifests; TF-IDF + Logistic Regression/LinearSVC baselines; evaluation, diagnostics, Colab notebooks and offline CI tests.
 
-**Not implemented as a production application:** a deployed/hosted API, image/video moderation, or Transformer/PhoBERT training. A local FastAPI inference demo and React UI now exist under `apps/api` and `apps/web`; both require a trained local model artifact. Some older files such as [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) and [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md) contain planned-stage wording from an earlier phase and should not override the current code/this README.
+**Not implemented as a production application:** a deployed/hosted API, image/video moderation, or Transformer/PhoBERT training. A local FastAPI inference service and Next.js UI exist under `apps/api` and `apps/web`; Mock Preview needs no artifact, while real inference requires a trusted trained model. Some older files such as [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) and [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md) contain planned-stage wording from an earlier phase and should not override the current code/this README.
 
 **License and data rights:** The repository is public but currently has no top-level `LICENSE` file. Do not assume source-code redistribution rights or dataset redistribution rights without checking and adding the appropriate license/permissions. Historical 3K/multi-label annotation material is not part of the current 50K single-label baseline.
 
-## Local model inference demo (React + FastAPI)
+## Local model inference demo (Next.js + FastAPI)
 
 A real-model demo is available under [apps/web](apps/web/README.md) and
 [apps/api](apps/api/README.md). This UI supports **only Vietnamese text topic
@@ -330,21 +333,25 @@ trusted trained experiment on the computer running the API; GitHub does not
 ship the large model files. Run these commands from the repository root:
 
 ```bash
-python -m pip install -e ".[modeling,api]"
-export VTC_MODEL_DIR="/path/to/lake/experiments/tfidf_baselines_v2/<experiment-name>"
-uvicorn apps.api.main:app --host 127.0.0.1 --port 8000
+python -m pip install -e ".[api]"
+export VTC_MODELS_ROOT="/path/to/lake/experiments"
+export VTC_DEFAULT_MODEL="tfidf_linear_svc_v2_9ff85ff3a7"
+fastapi dev
 ```
 
 Then, from a second terminal:
 
 ```bash
 cd apps/web
-npm install
+npm ci
 npm run dev
 ```
 
-Open http://localhost:5173. API health: http://localhost:8000/api/health;
-model readiness: http://localhost:8000/api/status. If `VTC_MODEL_DIR` is
-not set, API/status reports `ready=false`, and the frontend will **not**
-produce any fake predictions. For LinearSVC, values are raw decision margins,
-not probabilities. See the app READMEs for details and limitations.
+Open http://localhost:3000. API health: http://localhost:8000/api/health;
+model readiness: http://localhost:8000/api/status. With no configured artifacts,
+real inference returns unavailable, but the frontend can still display its
+explicitly labeled Mock Preview. On Windows use PowerShell environment variables
+(`$env:VTC_MODELS_ROOT`) or `scripts/run_inference_api.ps1`. For LinearSVC, values are raw decision margins,
+not probabilities. The FastAPI CLI entrypoint is defined in `pyproject.toml` so run `fastapi dev`
+from repository root. The three backend packages are `route/`, `schema/`,
+and `service/`; see [apps/api](apps/api/README.md) for details.
