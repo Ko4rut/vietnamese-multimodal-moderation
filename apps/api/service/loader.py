@@ -18,6 +18,7 @@ from vietnamese_topic_classification.config import get_domain_labels
 from .registry import resolve_descriptor
 from .types import ClassifierName, LoadedModel, ModelDescriptor, ModelUnavailable
 
+
 def _check_sklearn_version(descriptor: ModelDescriptor) -> None:
     stored = descriptor.sklearn_version
     if stored is None:

@@ -8,6 +8,7 @@ from vietnamese_topic_classification.config import get_domain_labels
 
 from .types import LoadedModel
 
+
 def predict_text(model: LoadedModel, text: str, top_k: int = 5) -> dict[str, object]:
     """Return genuine model rankings; a LinearSVC margin is not a probability."""
     if not (1 <= top_k):
