@@ -10,7 +10,7 @@ import sklearn
 from fastapi.testclient import TestClient
 
 from apps.api.main import app
-from apps.api.model_service import _load_pipeline
+from apps.api.service.loader import _load_pipeline
 from vietnamese_topic_classification.training import ClassifierConfig, ExperimentConfig
 from vietnamese_topic_classification.training.factory import build_pipeline
 
@@ -191,3 +191,14 @@ def test_corrupted_artifact_returns_service_unavailable(tmp_path, monkeypatch):
     response = client.post("/api/predict", json={"text": "Thị trường tài chính"})
     assert response.status_code == 503
     assert "Traceback" not in response.text
+
+
+def test_modular_app_and_openapi_route_contract():
+    """Ensure the router composition preserves all Next.js-facing endpoints."""
+    from apps.api.main import create_app
+
+    fresh_app = create_app()
+    operations = fresh_app.openapi()["paths"]
+    assert {"/api/health", "/api/models", "/api/status", "/api/labels", "/api/predict"} <= set(operations)
+    assert "post" in operations["/api/predict"]
+    assert "get" in operations["/api/models"]

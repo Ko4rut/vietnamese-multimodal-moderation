@@ -28,4 +28,4 @@ if ($DefaultModel) {
     $env:VTC_DEFAULT_MODEL = $DefaultModel
 }
 Write-Host "FastAPI docs: http://127.0.0.1:$Port/docs"
-python -m uvicorn apps.api.main:app --host 127.0.0.1 --port $Port
+fastapi dev --host 127.0.0.1 --port $Port

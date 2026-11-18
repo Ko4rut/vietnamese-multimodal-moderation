@@ -17,8 +17,8 @@ experiments/
 ~~~
 
 Each model folder contains model.joblib, config.json and metadata.json.
-The four real artifacts were trained with **scikit-learn 1.6.1**. Match that
-major/minor version when loading pickle-based artifacts (joblib). Download
+The four real artifacts were trained with **scikit-learn 1.6.1**. The
+`api` dependency extra pins the compatible version when loading these joblib artifacts. Download
 or sync experiment folders onto the host running the API; a path in a Colab
 runtime cannot be read from your Windows PC.
 
@@ -27,7 +27,7 @@ runtime cannot be read from your Windows PC.
 From the repository root:
 
 ~~~powershell
-python -m pip install -e ".[api]" "scikit-learn==1.6.1" "joblib>=1.3,<2"
+python -m pip install -e ".[api]"
 
 # Replace with the actual local path of your synced Drive experiments.
 .\scripts\run_inference_api.ps1 -ModelsRoot "E:\models\experiments" -DefaultModel "tfidf_linear_svc_v2_9ff85ff3a7"
@@ -39,6 +39,17 @@ For a single experiment, use the backward-compatible option:
 .\scripts\run_inference_api.ps1 -ModelDir "E:\models\experiments\tfidf_baselines_v2\tfidf_logreg_v2_9ff85ff3a7"
 ~~~
 
+Run `fastapi dev` from the **repository root**; the app entrypoint is set in
+`pyproject.toml`, so no module path is needed:
+
+~~~powershell
+$env:VTC_MODELS_ROOT = "E:\\models\\experiments"
+$env:VTC_DEFAULT_MODEL = "tfidf_linear_svc_v2_9ff85ff3a7"
+fastapi dev
+~~~
+
+`fastapi dev` uses auto-reload and localhost by default. The PowerShell helper
+also runs this CLI. For production/container usage, use `fastapi run` instead.
 Visit http://127.0.0.1:8000/docs (interactive Swagger UI).
 
 ## Docker Compose: local container
@@ -52,6 +63,31 @@ docker compose -f apps/api/compose.yml up --build
 ~~~
 
 The mount is read-only. Port 8000 is bound only to localhost.
+
+## Backend architecture
+
+~~~text
+apps/api/
+├── main.py                   # create_app(), include_router(), CORS
+├── route/
+│   ├── health.py             # GET health, labels
+│   ├── model.py              # GET models, status
+│   └── prediction.py         # POST predict, HTTP errors
+├── schema/
+│   ├── health.py             # HealthStatus
+│   ├── model.py              # ModelCatalog, ModelStatus
+│   └── prediction.py         # PredictRequest, PredictResponse
+├── service/
+│   ├── types.py              # ModelDescriptor, LoadedModel, errors
+│   ├── registry.py           # Discover/validate experiment metadata
+│   ├── loader.py             # Read/cache trusted joblib files
+│   └── inference.py          # Infer and rank model scores
+├── Dockerfile
+└── compose.yml
+~~~
+
+All user-facing API paths and JSON response fields are preserved; moving
+implementation code does not require changes to the Next.js client.
 
 ## API contract
 
