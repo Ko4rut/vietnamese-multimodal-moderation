@@ -1,10 +1,12 @@
+export type ExampleId = "technology" | "finance" | "sports" | "travel";
+
 export interface TextExample {
-  id: string;
+  id: ExampleId;
   label: string;
   text: string;
 }
 
-export const EXAMPLES: TextExample[] = [
+export const EXAMPLES: readonly TextExample[] = [
   {
     id: "technology",
     label: "Công nghệ",

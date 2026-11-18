@@ -1,6 +1,9 @@
 export type Classifier = "logistic_regression" | "linear_svc";
 export type ScoreKind = "probability" | "decision_margin";
 
+/** Whether the visible prediction is a frontend-only example or an API response. */
+export type InferenceMode = "mock" | "live";
+
 export interface ModelStatus {
   ready: boolean;
   message: string;
@@ -21,12 +24,18 @@ export interface RankedPrediction {
   score: number;
 }
 
+/** Matches POST /api/predict exactly; also reused by typed demo fixtures. */
 export interface Prediction {
   model_name: string;
   label_id: number;
   label: string;
   score_kind: ScoreKind;
   top_predictions: RankedPrediction[];
+}
+
+export interface PredictionView {
+  source: InferenceMode;
+  data: Prediction;
 }
 
 export function humanizeDomain(domain: string): string {
