@@ -1,41 +1,36 @@
-# VietTopic Web Demo
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-Responsive React + TypeScript + Vite frontend for the repository's **actual**
-25-domain Vietnamese text classification model. This is not a fake scoring
-demo: the Predict button is disabled until the API reports a loaded model.
+## Getting Started
 
-## Start locally
-
-From the repository root, start the API in one terminal (see
-[`apps/api/README.md`](../api/README.md)):
+First, run the development server:
 
 ```bash
-python -m pip install -e ".[modeling,api]"
-export VTC_MODEL_DIR="/path/to/lake/experiments/tfidf_baselines_v2/<experiment-name>"
-uvicorn apps.api.main:app --host 127.0.0.1 --port 8000
-```
-
-In another terminal:
-
-```bash
-cd apps/web
-npm install
 npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
 ```
 
-Visit **http://localhost:5173**. Vite proxies `/api` to port 8000; no API
-URL or secrets need to be embedded in the frontend. Run `npm run build` to
-produce static files in `apps/web/dist/`. For deployment configure a reverse
-proxy to the API for `/api` on the same origin.
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-## Display contracts
+You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-- Shows model readiness, experiment name and validation Macro-F1 if available.
-- Predicts one canonical label per input, with Vietnamese translations.
-- Lists top five scores; **probabilities** for Logistic Regression and raw
-  **margins** for LinearSVC (never misleading percentages for SVC).
-- Accepts text only, max 10,000 characters; no simulated predictions.
-- No uploads, local storage, automatic logging or text persistence.
+This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
-Backend training artifacts are intentionally *not* packaged with the web build.
-All example inputs are illustrative; model scores are supplied only by the API.
+## Learn More
+
+To learn more about Next.js, take a look at the following resources:
+
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+
+You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+
+## Deploy on Vercel
+
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
