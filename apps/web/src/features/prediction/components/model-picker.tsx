@@ -9,7 +9,7 @@ interface ModelPickerProps {
 export function ModelPicker({ models, selectedModelId, onSelectModel }: ModelPickerProps) {
   return (
     <div className="model-picker">
-      <label htmlFor="inference-model">Chọn baseline inference</label>
+      <label htmlFor="inference-model">Model đang xem (đồng bộ với tab kết quả)</label>
       <select
         id="inference-model"
         value={selectedModelId ?? ""}

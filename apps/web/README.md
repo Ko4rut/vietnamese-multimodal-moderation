@@ -30,12 +30,28 @@ Visit http://localhost:3000. The browser uses Next.js proxy rewrites from
 The demo requires an available backend and trusted trained artifact to predict.
 The text examples are **sample inputs only**; none have hard-coded predictions.
 
-## Predict one model
+## Switch models directly in the result panel
 
-Select the experiment in the Model Status card. Press **Phân tích văn bản**
-to call `POST /api/predict`. The result contains the predicted label and
-top-five scores in an animated bar chart. Logistic Regression returns model
-probabilities; LinearSVC returns decision margins (not probabilities).
+Select a baseline experiment in **Trạng thái mô hình**, enter Vietnamese text,
+then press **Phân tích văn bản**. When at least two models are registered,
+the dashboard selects a pair (preferably Logistic Regression and LinearSVC
+from the same V1/V2 generation) and calls `POST /api/compare` **once**.
+Both real predictions are cached for that input.
+
+The **Kết quả phân tích** card now has two model tabs above the predicted
+label and Top-5 chart. Switch tabs to display the other model's result
+**without retyping or rerunning inference**. The Model Status dropdown follows
+the active tab. If only one model is present, the existing `POST /api/predict`
+flow remains supported; there are no mock predictions.
+
+When more experiments are installed, selecting another experiment from the
+dropdown changes the pair. A model that has not yet been analyzed for the
+current input is inferred on demand and cached. Editing text or refreshing
+the registry clears old predictions so results never belong to an old input.
+If a model fails, its tab displays an error rather than fabricating results.
+
+Logistic Regression uses estimated class probabilities; LinearSVC uses
+decision margins. Their numeric scales are not directly comparable.
 
 ## Compare multiple models
 
@@ -71,14 +87,16 @@ src/
 └── features/prediction/
     ├── api/client.ts             # Fully typed FastAPI client
     ├── hooks/
-    │   ├── use-prediction.ts     # Single-model prediction and readiness
+    │   ├── use-prediction.ts     # Paired inference, result caching and readiness
     │   └── use-model-comparison.ts
+    ├── utils/model-pair.ts       # Stable V1/V2-aware model selection
     ├── data/                     # Sample input text and canonical labels
     ├── types.ts
     └── components/
         ├── demo-dashboard.tsx
         ├── text-input-panel.tsx
         ├── prediction-panel.tsx
+        ├── model-result-tabs.tsx
         ├── model-status-card.tsx
         ├── model-picker.tsx
         ├── prediction-bar-chart.tsx
@@ -94,6 +112,7 @@ under `viettopic-theme`.
 
 ~~~powershell
 npm run lint
+npm run test:unit
 npm run build
 ~~~
 
