@@ -237,6 +237,66 @@ def test_corrupted_artifact_returns_service_unavailable(tmp_path, monkeypatch):
     assert "Traceback" not in response.text
 
 
+
+def test_compare_two_models_same_text_and_score_kinds(tmp_path, monkeypatch):
+    root = tmp_path / "experiments"
+    make_artifact(root / "lr", "logistic_regression", "lr_v2")
+    make_artifact(root / "svc", "linear_svc", "svc_v2")
+    monkeypatch.setenv("VTC_MODELS_ROOT", str(root))
+
+    response = client.post(
+        "/api/compare",
+        json={"text": "bóng đá thể thao Việt Nam", "model_ids": ["svc_v2", "lr_v2"]},
+    )
+    assert response.status_code == 200
+    results = response.json()["results"]
+    assert [entry["model_id"] for entry in results] == ["svc_v2", "lr_v2"]
+    assert [entry["status"] for entry in results] == ["ok", "ok"]
+    assert [entry["prediction"]["score_kind"] for entry in results] == [
+        "decision_margin", "probability"
+    ]
+    assert all(entry["error"] is None for entry in results)
+    assert all(len(entry["prediction"]["top_predictions"]) == 3 for entry in results)
+
+
+def test_compare_returns_partial_results_for_missing_or_broken_model(tmp_path, monkeypatch):
+    root = tmp_path / "experiments"
+    make_artifact(root / "working", "logistic_regression", "working")
+    broken = make_artifact(root / "broken", "linear_svc", "broken")
+    (broken / "model.joblib").write_bytes(b"corrupt")
+    monkeypatch.setenv("VTC_MODELS_ROOT", str(root))
+
+    response = client.post(
+        "/api/compare",
+        json={
+            "text": "công nghệ máy tính",
+            "model_ids": ["working", "not_registered", "broken"],
+        },
+    )
+    assert response.status_code == 200
+    results = response.json()["results"]
+    assert [entry["status"] for entry in results] == ["ok", "error", "error"]
+    assert results[0]["prediction"]["model_id"] == "working"
+    assert results[1]["prediction"] is None
+    assert results[2]["prediction"] is None
+    assert all("Traceback" not in entry["error"] for entry in results if entry["error"])
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        {"text": "văn bản hợp lệ", "model_ids": ["one"]},
+        {"text": "văn bản hợp lệ", "model_ids": ["one", "one"]},
+        {"text": "văn bản hợp lệ", "model_ids": ["a", "b", "c", "d", "e"]},
+        {"text": "văn bản hợp lệ", "model_ids": ["one", "../path"] * 2},
+        {"text": "  ", "model_ids": ["one", "two"]},
+    ],
+)
+def test_compare_rejects_invalid_payload(payload):
+    response = client.post("/api/compare", json=payload)
+    assert response.status_code == 422
+
+
 def test_modular_app_and_openapi_route_contract():
     """Ensure the router composition preserves all Next.js-facing endpoints."""
     from apps.api.main import create_app
@@ -246,3 +306,4 @@ def test_modular_app_and_openapi_route_contract():
     assert {"/api/health", "/api/models", "/api/status", "/api/labels", "/api/predict"} <= set(operations)
     assert "post" in operations["/api/predict"]
     assert "get" in operations["/api/models"]
+    assert "post" in operations["/api/compare"]
