@@ -126,7 +126,8 @@ implementation code does not require changes to the Next.js client.
 | GET | /api/models | Registered model IDs and public metadata |
 | GET | /api/status?model_id=... | Readiness of selected model |
 | GET | /api/labels | Canonical 25 domains |
-| POST | /api/predict | Actual model inference, ranked top 5 |
+| POST | /api/predict | Actual inference for one model, ranked top 5 |
+| POST | /api/compare | Compare 2–4 selected models on the same text |
 
 ~~~powershell
 Invoke-RestMethod -Uri "http://127.0.0.1:8000/api/models"
@@ -142,8 +143,24 @@ Regression emits probability estimates, while LinearSVC emits raw decision
 margins; these are **not** percentages. Invalid text returns HTTP 422,
 unknown model_id 404, and unavailable/incompatible artifacts 503.
 
-The Next.js web app already proxies /api/* to localhost:8000. Start the web
-app and choose **AI thực** rather than Mock Preview to test real inference.
+The Next.js web app already proxies /api/* to localhost:8000. Its interface
+uses real model inference only; there is no mock mode.
+
+For multi-model comparison, submit:
+
+~~~json
+{
+  "text": "Đội tuyển Việt Nam giành chiến thắng",
+  "model_ids": ["tfidf_logreg_v2_9ff85ff3a7", "tfidf_linear_svc_v2_9ff85ff3a7"]
+}
+~~~
+
+The model IDs must be distinct (2–4 entries). `POST /api/compare` returns
+`{"results":[{"model_id":"...","status":"ok","prediction":{...},"error":null},...]}`.
+Unavailable models return per-model `status="error"` with a message, while
+successful model results remain available. Requests with invalid model counts,
+repeated IDs, or invalid text return 422. The endpoint evaluates the selected
+models using their existing trusted sklearn pipelines; it never retrains them.
 
 Before any public Internet deployment, add HTTPS, authentication, request
 limits, monitoring and a trusted persistent artifact volume.

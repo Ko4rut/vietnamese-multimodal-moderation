@@ -320,7 +320,7 @@ Keep bulk data, credentials and generated models outside Git. `.gitignore` exclu
 
 **Implemented now:** Bronze/Silver V1/Silver V2/Gold V1/Gold V2 pipelines; immutable readers/manifests; TF-IDF + Logistic Regression/LinearSVC baselines; evaluation, diagnostics, Colab notebooks and offline CI tests.
 
-**Not implemented as a production application:** a deployed/hosted API, image/video moderation, or Transformer/PhoBERT training. A local FastAPI inference service and Next.js UI exist under `apps/api` and `apps/web`; Mock Preview needs no artifact, while real inference requires a trusted trained model. Some older files such as [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) and [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md) contain planned-stage wording from an earlier phase and should not override the current code/this README.
+**Not implemented as a production application:** a deployed/hosted API, image/video moderation, or Transformer/PhoBERT training. A local FastAPI inference service and Next.js UI exist under `apps/api` and `apps/web`; the UI performs real inference only and requires a trusted trained model. Some older files such as [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) and [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md) contain planned-stage wording from an earlier phase and should not override the current code/this README.
 
 **License and data rights:** The repository is public but currently has no top-level `LICENSE` file. Do not assume source-code redistribution rights or dataset redistribution rights without checking and adding the appropriate license/permissions. Historical 3K/multi-label annotation material is not part of the current 50K single-label baseline.
 
@@ -351,9 +351,9 @@ model readiness: http://localhost:8000/api/status. FastAPI discovers complete
 experiments in the repository's `models/` automatically without environment
 variables or a fixed working directory. New folders appear on the next request;
 replacing an already-loaded model requires a restart. Without artifacts, the
-frontend still has its explicit Mock Preview, while real inference is unavailable.
+frontend shows a model-unavailable state and does not fabricate predictions.
 For external model storage, use `VTC_MODELS_ROOT` or the optional
-`scripts/run_inference_api.ps1 -ModelsRoot ...` helper. For LinearSVC, values
+`scripts/run_inference_api.ps1 -ModelsRoot ...` helper. Use the frontend Multi-Model Comparison panel to run 2–4 selected experiments against the same text through POST /api/compare. For LinearSVC, values
 are raw decision margins, not probabilities. The CLI entrypoint is configured
 in `pyproject.toml`; the backend packages remain `route/`, `schema/`,
 and `service/`; see [apps/api](apps/api/README.md) for details.
