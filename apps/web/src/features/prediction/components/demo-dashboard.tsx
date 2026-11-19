@@ -6,6 +6,7 @@ import { Topbar } from "@/components/layout/topbar";
 import { Icon } from "@/components/ui/icon";
 import { DomainBrowser } from "./domain-browser";
 import { ModelStatusCard } from "./model-status-card";
+import { ModelComparison } from "./model-comparison";
 import { PredictionPanel } from "./prediction-panel";
 import { TextInputPanel } from "./text-input-panel";
 import { usePrediction } from "../hooks/use-prediction";
@@ -58,6 +59,8 @@ export function DemoDashboard() {
             />
             <PredictionPanel prediction={prediction} busy={predicting} chartRevision={chartRevision} />
           </div>
+
+          <ModelComparison models={models} text={text} />
 
           <div className="insight-grid">
             <ModelStatusCard

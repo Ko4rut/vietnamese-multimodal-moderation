@@ -46,6 +46,18 @@ export interface Prediction {
   top_predictions: RankedPrediction[];
 }
 
+/** Per-model result from POST /api/compare. */
+export interface ComparisonResult {
+  model_id: string;
+  status: "ok" | "error";
+  prediction: Prediction | null;
+  error: string | null;
+}
+
+export interface CompareResponse {
+  results: ComparisonResult[];
+}
+
 export function humanizeDomain(domain: string): string {
   return domain.replaceAll("_", " ").replaceAll("and", "&");
 }

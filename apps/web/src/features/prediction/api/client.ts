@@ -1,4 +1,4 @@
-import type { DomainLabel, ModelCatalog, ModelStatus, Prediction } from "../types";
+import type { DomainLabel, ModelCatalog, ModelStatus, Prediction, CompareResponse } from "../types";
 
 async function requestJson<T>(path: string, options: RequestInit = {}): Promise<T> {
   let response: Response;
@@ -46,6 +46,19 @@ export function predictText(text: string, modelId?: string | null, signal?: Abor
   return requestJson<Prediction>("predict", {
     method: "POST",
     body: JSON.stringify({ text, ...(modelId ? { model_id: modelId } : {}) }),
+    signal,
+  });
+}
+
+/** Run 2-4 registered models on one shared text, without synthesizing scores. */
+export function compareModels(
+  text: string,
+  modelIds: string[],
+  signal?: AbortSignal,
+): Promise<CompareResponse> {
+  return requestJson<CompareResponse>("compare", {
+    method: "POST",
+    body: JSON.stringify({ text, model_ids: modelIds }),
     signal,
   });
 }

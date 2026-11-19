@@ -57,7 +57,7 @@ export function TextInputPanel({
           {busy ? <><span className="spinner" /> Đang phân tích...</> : <><Icon name="sparkles" size={18}/> Phân tích văn bản <Icon name="arrow-right" size={17}/></>}
         </button>
       </div>
-      <p className="field-help" id="text-help"><Icon name="shield" size={14}/>"Văn bản được gửi tới FastAPI để suy luận bằng mô hình đã train; thao tác này không huấn luyện lại model."</p>
+      <p className="field-help" id="text-help"><Icon name="shield" size={14}/>Văn bản được gửi tới FastAPI để suy luận bằng mô hình đã train; thao tác này không huấn luyện lại model.</p>
     </section>
   );
 }
