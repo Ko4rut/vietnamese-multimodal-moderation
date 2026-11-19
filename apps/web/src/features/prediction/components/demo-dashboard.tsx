@@ -16,7 +16,7 @@ export function DemoDashboard() {
   const {
     text, updateText, modelStatus, statusError, models,
     selectedModelId, selectModel, domains,
-    prediction, chartRevision, predictionError, predicting,
+    prediction, resultModels, resultError, chartRevision, predictionError, predicting,
     refreshing, refreshStatus, runPrediction,
   } = usePrediction();
   const ready = modelStatus?.ready ?? (statusError ? false : null);
@@ -57,7 +57,15 @@ export function DemoDashboard() {
               text={text} onTextChange={updateText} onAnalyze={() => void runPrediction()}
               busy={predicting} ready={ready} error={predictionError}
             />
-            <PredictionPanel prediction={prediction} busy={predicting} chartRevision={chartRevision} />
+            <PredictionPanel
+              prediction={prediction}
+              models={resultModels}
+              selectedModelId={selectedModelId}
+              onSelectModel={selectModel}
+              error={resultError}
+              busy={predicting}
+              chartRevision={chartRevision}
+            />
           </div>
 
           <ModelComparison models={models} text={text} />

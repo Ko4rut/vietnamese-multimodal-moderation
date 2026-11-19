@@ -1,0 +1,51 @@
+/* Model tabs inside the original prediction panel (light + dark themes). */
+.result-model-switch {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  margin: 17px 23px 0;
+  overflow-x: auto;
+  padding: 2px 2px 4px;
+}
+.result-model-tab {
+  flex: 1 0 0;
+  min-width: 0;
+  padding: 11px 12px;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border: 1px solid var(--border-strong);
+  border-radius: 9px;
+  background: var(--surface-soft);
+  color: var(--muted-strong);
+  transition: background .2s, border-color .2s, color .2s;
+}
+.result-model-tab:hover:not(:disabled) {
+  background: var(--primary-light);
+  border-color: var(--primary);
+}
+.result-model-tab.is-active {
+  background: var(--primary-light);
+  border-color: var(--primary);
+  color: var(--primary-text);
+  box-shadow: inset 0 0 0 1px var(--primary);
+}
+.result-model-tab span {
+  font-weight: 800;
+  font-size: 11px;
+}
+.result-model-tab small {
+  font-size: 9px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+.result-model-tab.is-active small { color: var(--muted-strong); }
+@media (max-width: 680px) {
+  .result-model-switch { margin: 14px 18px 0; gap: 7px; }
+  .result-model-tab { padding: 9px; }
+  .result-model-tab span { font-size: 10px; }
+}

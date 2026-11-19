@@ -3,16 +3,23 @@
 import { useState } from "react";
 import { Icon } from "@/components/ui/icon";
 import { displayDomain } from "../data/domains";
-import type { Prediction } from "../types";
+import type { AvailableModel, Prediction } from "../types";
+import { ModelResultTabs } from "./model-result-tabs";
 import { formatPredictionScore, PredictionBarChart } from "./prediction-bar-chart";
 
 interface PredictionPanelProps {
   prediction: Prediction | null;
+  models: AvailableModel[];
+  selectedModelId: string | null;
+  onSelectModel: (modelId: string) => void;
+  error: string | null;
   busy: boolean;
   chartRevision: number;
 }
 
-export function PredictionPanel({ prediction, busy, chartRevision }: PredictionPanelProps) {
+export function PredictionPanel({
+  prediction, models, selectedModelId, onSelectModel, error, busy, chartRevision,
+}: PredictionPanelProps) {
   const [lastCopied, setLastCopied] = useState<string | null>(null);
   const result = prediction;
   const scores = result?.top_predictions ?? [];
@@ -49,6 +56,12 @@ export function PredictionPanel({ prediction, busy, chartRevision }: PredictionP
         </div>
         <span className="result-live-tag"><span className="mini-dot"/>INFERENCE</span>
       </div>
+      <ModelResultTabs
+        models={models}
+        activeModelId={selectedModelId}
+        busy={busy}
+        onSelectModel={onSelectModel}
+      />
       {result ? (
         <div className="result-content" aria-live="polite">
           <div className="result-primary">
@@ -74,7 +87,7 @@ export function PredictionPanel({ prediction, busy, chartRevision }: PredictionP
           </div>
           {scores.length > 0 && (
             <PredictionBarChart
-              key={chartRevision}
+              key={String(selectedModelId) + ":" + chartRevision}
               predictions={scores}
               scoreKind={result.score_kind}
               selectedLabelId={result.label_id}
@@ -89,11 +102,11 @@ export function PredictionPanel({ prediction, busy, chartRevision }: PredictionP
         </div>
       ) : (
         <div className="result-empty" aria-live="polite">
-          <span className="empty-status">{busy ? "ĐANG XỬ LÝ" : "CHỜ KẾT QUẢ"}</span>
-          <h4>{busy ? "AI đang phân tích văn bản..." : "Kết quả thực sẽ hiển thị tại đây"}</h4>
+          <span className="empty-status">{busy ? "ĐANG XỬ LÝ" : error ? "MODEL KHÔNG SẴN SÀNG" : "CHỜ KẾT QUẢ"}</span>
+          <h4>{busy ? "AI đang phân tích văn bản..." : error ? "Không lấy được kết quả model này" : "Kết quả thực sẽ hiển thị tại đây"}</h4>
           <p>{busy
             ? "Đang suy luận bằng mô hình đã huấn luyện."
-            : "Chọn model, nhập văn bản và nhấn “Phân tích văn bản” để xem kết quả thật."}</p>
+            : error ?? "Chọn model, nhập văn bản và nhấn “Phân tích văn bản” để xem kết quả thật."}</p>
           <div className="empty-steps">
             <span>01 · Nhập văn bản</span><Icon name="arrow-right" size={14}/>
             <span>02 · AI phân tích</span><Icon name="arrow-right" size={14}/>
