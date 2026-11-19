@@ -206,3 +206,19 @@ python -m vietnamese_topic_classification.data.main \
 Canonical code: `silver/v1/{model,validator,transformer,pipeline}.py`; `silver/v2/{model,corpus,cleaner,pipeline}.py`. Shared: `silver/{reader,exceptions}.py`. Legacy root-level implementation modules have been deleted. Import the canonical `silver.v1` or `silver.v2` modules; `SilverReader` remains shared at `silver.reader`.
 
 Existing flat reports and snapshots remain readable during migration; new snapshots are written to matching version directories.
+
+## Silver V3 — reviewed labels from Silver V2
+
+Silver V3 treats a verified Silver V2 snapshot as its pinned V3 Bronze-equivalent
+input rather than copying the same rows into another Bronze directory. It generates
+keyword/overlap evidence for exploration, then applies only complete,
+human-approved News decisions. Article text and non-News labels are preserved.
+The report pins Silver V2/Silver V1 lineage, the reviewed decision file, checksums,
+and per-domain counts. Outputs are write-once under `02_silver/v3/` and
+`04_reports/silver/v3/`.
+
+The current News sublabels are draft candidates; review the actual corpus and
+finalize the non-overlapping label guide before creating decisions. Run
+[`scripts/13_build_silver_v3.py`](../../../../scripts/13_build_silver_v3.py) or the
+[V3 Silver runner](../../../../notebooks/v3/colab_silver_v3_runner.ipynb) and
+[V3 end-to-end notebook](../../../../notebooks/v3/colab_end_to_end_v3.ipynb).

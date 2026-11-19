@@ -86,6 +86,9 @@ class GoldPipeline:
             "silver_sha256": str(verified["sha256"]),
         }
 
+    def _validator(self) -> GoldValidator:
+        return GoldValidator()
+
     def planned_paths(self, source_sha256: str) -> dict[str, Path]:
         """Compute immutable output paths without creating any artifacts.
 
@@ -95,12 +98,11 @@ class GoldPipeline:
         params = {
             "source_sha256": source_sha256,
             "config": self.config.as_dict(),
-            "label_to_id": GoldValidator().label_to_id,
+            "label_to_id": self._validator().label_to_id,
             "pipeline_version": self.version,
         }
-        if self.version == "v2":
-            # Distinct Silver cleaning rulesets may produce identical text.
-            # Include report bytes to keep Gold V2 lineage unambiguous.
+        if self.version in ("v2", "v3"):
+            # Distinct Silver rulesets may produce identical text.
             params["silver_report_sha256"] = _sha256_file(self.reader.report_path)
         config_hash = hashlib.sha256(
             json.dumps(params, sort_keys=True, separators=(",", ":")).encode("utf-8")
@@ -111,6 +113,9 @@ class GoldPipeline:
         if self.version == "v2":
             gold_root /= "v2"
             reports_root = reports_root / "gold" / "v2"
+        elif self.version == "v3":
+            gold_root /= "v3"
+            reports_root = reports_root / "gold" / "v3"
         paths = {
             split: gold_root / f"gold_{split}_{self.version}_{suffix}.jsonl"
             for split in SPLITS
@@ -125,7 +130,7 @@ class GoldPipeline:
         source = self.reader.verify()
         if source["records"] == 0:
             raise GoldValidationError("Silver has no accepted records; cannot build Gold")
-        validator = GoldValidator()
+        validator = self._validator()
         paths = self.planned_paths(source["sha256"])
         if any(
             path.exists() or path.with_name(path.name + ".uploading").exists()

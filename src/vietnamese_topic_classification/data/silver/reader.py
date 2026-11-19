@@ -31,12 +31,13 @@ class SilverReader(BaseReader):
         if not self.is_safe_metadata_name(metadata_name):
             raise SilverReportError("metadata_name must be a JSON filename, not a path")
         super().__init__(data_lake_root, metadata_name)
-        # V1 and legacy V2 reports were published flat. New V2 reports have
+        # V1 and legacy V2 reports were published flat. New V2/V3 reports have
         # their own version directory; accept both without changing callers.
         reports_root = self.root / "04_reports"
         candidates = [
             reports_root / "silver" / "v1" / self.metadata_name,
             reports_root / "silver" / "v2" / self.metadata_name,
+            reports_root / "silver" / "v3" / self.metadata_name,
             reports_root / self.metadata_name,
         ]
         existing = [path for path in candidates if path.is_file()]
@@ -78,11 +79,11 @@ class SilverReader(BaseReader):
         self.report: SilverQualityReport = cast(SilverQualityReport, report)
         data_root = self.root / "02_silver"
         version = report.get("pipeline_version")
-        if version not in (None, "v1", "v2"):
+        if version not in (None, "v1", "v2", "v3"):
             raise SilverReportError(f"Unsupported Silver version: {version!r}")
-        if version is None and self.report_path.parent.name in ("v1", "v2"):
+        if version is None and self.report_path.parent.name in ("v1", "v2", "v3"):
             version = self.report_path.parent.name
-        if version in ("v1", "v2"):
+        if version in ("v1", "v2", "v3"):
             data_candidates = [data_root / version / file_name, data_root / file_name]
         else:
             data_candidates = [data_root / file_name]

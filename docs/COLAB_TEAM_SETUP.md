@@ -47,13 +47,49 @@ DATA_LAKE_ROOT/
   02_silver/
     v1/                       # Accepted/rejected Silver V1
     v2/                       # Accepted/rejected Silver V2
-  03_gold/                    # Gold V1 splits + manifests
+    v3/                       # Reviewed label-refined Silver V3
+  03_gold/
+    v2/                       # Gold V2 splits + manifests
+    v3/                       # Gold V3 splits + manifests
   04_reports/
     silver/v1/                # Silver V1 quality
     silver/v2/                # Silver V2 quality + audit
+    silver/v3/                # Keyword analysis, review decisions, Silver V3 audit
+    gold/v2/                  # Gold V2 quality
+    gold/v3/                  # Gold V3 quality
     gold_quality_*.json       # Gold V1 quality
   experiments/                # Modeling artifacts
 ```
+
+## V3 — review in Silver, split in Gold, model separately
+
+After a complete Silver V2 snapshot has been published, use the dedicated
+[Silver V3 runner](../notebooks/v3/colab_silver_v3_runner.ipynb),
+[Gold V3 runner](../notebooks/v3/colab_gold_v3_runner.ipynb), and
+[Modeling V3 runner](../notebooks/v3/colab_modeling_v3_runner.ipynb). The
+[V3 end-to-end notebook](../notebooks/v3/colab_end_to_end_v3.ipynb) sequences the same
+stages in one notebook and includes an explicit human-review stop before publication.
+
+1. Mount the same Drive with read access to inspect; use edit access to publish.
+2. Silver: select the exact Silver V2 quality report. The runner verifies its report,
+   accepted/rejected JSONL, audit, and Silver V1 lineage. Generate keyword/overlap
+   evidence and review the deterministic up-to-300-row News pilot before freezing a
+   non-overlapping label guide.
+3. Create the full News decision file only after the pilot. Approve every row as a
+   human reviewer, then opt in to publish Silver V3.
+4. Gold: select the verified Silver V3 snapshot and opt in to create new
+   train/validation/test splits from all accepted Silver V3 rows using the existing
+   splitter. Gold V2 split membership is not reused.
+5. Modeling: select the exact Gold V3 manifest. The baselines train on train and are
+   compared on validation; test is checksum-verified but not loaded or evaluated.
+
+The candidate News sublabels are provisional until you examine the actual corpus.
+V3 is write-once and leaves all V1/V2 files unchanged. Since taxonomy/relabel decisions
+are made before Gold V3 creates its split, this workflow uses the full source pool to
+develop the taxonomy; document that limitation when reporting final test metrics.
+The modeling runner writes to `experiments/tfidf_baselines_v3/` and uses the label
+mapping embedded in the verified Gold V3 manifest.
+See [V3 workflow details](V3_NEWS_RELABELING.md).
 
 ## Troubleshooting
 

@@ -1,0 +1,37 @@
+version: domains_v3
+task: single_label_multiclass
+num_classes: 27
+taxonomy_status: draft_candidates_require_corpus_review
+dataset:
+  id: VTSNLP/vietnamese_curated_dataset
+  revision: b81fcce58945970117a1b56d50ec81be2628a5c3
+  label_column: domain
+  label_provenance: draft_pending_llm_suggestions_and_human_review
+domains:
+  - Arts_and_Entertainment
+  - Autos_and_Vehicles
+  - Beauty_and_Fitness
+  - Books_and_Literature
+  - Business_and_Industrial
+  - Computers_and_Electronics
+  - Finance
+  - Food_and_Drink
+  - Games
+  - Health
+  - Hobbies_and_Leisure
+  - Home_and_Garden
+  - Internet_and_Telecom
+  - Jobs_and_Education
+  - Law_and_Government
+  - News_Politics
+  - News_Crime_Disaster
+  - News_Current_Affairs
+  - Online_Communities
+  - People_and_Society
+  - Pets_and_Animals
+  - Real_Estate
+  - Science
+  - Sensitive_Subjects
+  - Shopping
+  - Sports
+  - Travel_and_Transportation

@@ -1,10 +1,10 @@
-"""Train TF-IDF baselines on verified Gold V1/V2 (never evaluate held-out test)."""
+"""Train TF-IDF baselines on verified Gold V1/V2/V3 (never evaluate held-out test)."""
 
 from __future__ import annotations
 
 from pathlib import Path
 
-from vietnamese_topic_classification.config import get_domain_labels
+from vietnamese_topic_classification.data.gold import GoldReader
 from vietnamese_topic_classification.evaluation.metrics import calculate_metrics
 
 from .artifacts import save_artifacts
@@ -27,11 +27,14 @@ def run_experiment(
         data_lake_root=data_lake_root,
         manifest_name=config.gold_manifest_name,
     )
+    manifest = GoldReader(data_lake_root, config.gold_manifest_name).manifest
+    label_mapping = manifest["label_to_id"]
+    label_names = tuple(sorted(label_mapping, key=lambda label: label_mapping[label]))
     pipeline = build_pipeline(config)
     pipeline.fit(train["texts"], train["labels"])
     predictions = pipeline.predict(validation["texts"])
     report = calculate_metrics(
-        validation["labels"], predictions, label_names=get_domain_labels()
+        validation["labels"], predictions, label_names=label_names
     )
     result: ExperimentResult = {
         "experiment_name": config.name,

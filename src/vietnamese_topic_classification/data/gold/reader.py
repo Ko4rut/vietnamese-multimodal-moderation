@@ -1,4 +1,4 @@
-"""Read and verify a pinned Gold V1 or V2 train/validation/test snapshot."""
+"""Read and verify a pinned Gold V1/V2/V3 train/validation/test snapshot."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ import re
 from pathlib import Path
 from typing import Any, Iterator, cast
 
-from vietnamese_topic_classification.config import get_domain_labels
+from vietnamese_topic_classification.config import get_domain_labels, get_v3_domain_labels
 from vietnamese_topic_classification.data.base_reader import BaseReader
 
 from .config import GOLD_DIR_NAME
@@ -33,10 +33,17 @@ class GoldReader(BaseReader):
         if not self.is_safe_metadata_name(metadata_name):
             raise GoldManifestError("metadata_name must be a JSON filename, not a path")
         super().__init__(data_lake_root, metadata_name)
-        self.version = "v2" if metadata_name.startswith("gold_manifest_v2_") else "v1"
+        if metadata_name.startswith("gold_manifest_v3_"):
+            self.version = "v3"
+        elif metadata_name.startswith("gold_manifest_v2_"):
+            self.version = "v2"
+        else:
+            self.version = "v1"
         gold_root = self.root / GOLD_DIR_NAME
         if self.version == "v2":
             gold_root /= "v2"
+        elif self.version == "v3":
+            gold_root /= "v3"
         self.manifest_path = gold_root / "manifests" / metadata_name
         try:
             manifest = json.loads(self.manifest_path.read_text(encoding="utf-8"))
@@ -46,11 +53,16 @@ class GoldReader(BaseReader):
             raise GoldManifestError("Gold manifest must be a format_version=1 JSON object")
         if self.version == "v2" and manifest.get("pipeline_version") != "v2":
             raise GoldManifestError("Gold V2 manifest must declare pipeline_version=v2")
+        if self.version == "v3" and manifest.get("pipeline_version") != "v3":
+            raise GoldManifestError("Gold V3 manifest must declare pipeline_version=v3")
         if self.version == "v1" and manifest.get("pipeline_version") not in (None, "v1"):
             raise GoldManifestError("Gold V1 manifest cannot declare a different version")
-        expected_mapping = {label: index for index, label in enumerate(get_domain_labels())}
+        labels = get_v3_domain_labels() if self.version == "v3" else get_domain_labels()
+        expected_mapping = {label: index for index, label in enumerate(labels)}
         if manifest.get("label_to_id") != expected_mapping:
-            raise GoldManifestError("Gold manifest label mapping differs from domains_v1")
+            raise GoldManifestError(
+                f"Gold manifest label mapping differs from domains_{self.version}"
+            )
         if type(manifest.get("total_rows")) is not int or manifest["total_rows"] < 1:
             raise GoldManifestError("Gold manifest total_rows must be positive")
         entries = manifest.get("files")
@@ -71,6 +83,10 @@ class GoldReader(BaseReader):
                 f"gold_{split}_v2_"
             ):
                 raise GoldManifestError(f"Gold V2 {split} file has the wrong version")
+            if self.version == "v3" and not entry["file_name"].startswith(
+                f"gold_{split}_v3_"
+            ):
+                raise GoldManifestError(f"Gold V3 {split} file has the wrong version")
             paths[split] = gold_root / entry["file_name"]
             if not paths[split].is_file():
                 raise GoldIntegrityError(f"Gold split missing: {paths[split]}")
@@ -106,6 +122,7 @@ class GoldReader(BaseReader):
         if split not in SPLITS:
             raise ValueError(f"Unknown Gold split {split!r}; expected {SPLITS}")
         path = self.data_paths[split]
+        mapping = self.manifest["label_to_id"]
         try:
             with path.open("r", encoding="utf-8") as handle:
                 for line_number, line in enumerate(handle, 1):
@@ -117,7 +134,7 @@ class GoldReader(BaseReader):
                         ) from exc
                     if not isinstance(row, dict):
                         raise GoldIntegrityError(f"Expected Gold JSON object at {path}:{line_number}")
-                    if self.manifest["label_to_id"].get(row.get("domain")) != row.get("label_id"):
+                    if mapping.get(row.get("domain")) != row.get("label_id"):
                         raise GoldIntegrityError(f"Gold label mismatch at {path}:{line_number}")
                     yield row
         except OSError as exc:

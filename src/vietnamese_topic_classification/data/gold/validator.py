@@ -12,8 +12,10 @@ from .model import GoldRecord
 
 
 class GoldValidator:
-    def __init__(self) -> None:
-        self.label_to_id = {name: index for index, name in enumerate(get_domain_labels())}
+    def __init__(self, labels: tuple[str, ...] | None = None) -> None:
+        self.label_to_id = {
+            name: index for index, name in enumerate(labels or get_domain_labels())
+        }
 
     def convert(self, record: dict[str, Any], line_number: int) -> GoldRecord:
         if not isinstance(record, dict):

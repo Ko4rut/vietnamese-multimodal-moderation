@@ -23,6 +23,7 @@ from .pipeline import GoldPipeline
 from .reader import GoldReader
 from .splitter import GoldSplitter
 from .v2 import GoldV2Pipeline
+from .v3 import GoldV3Pipeline
 from .validator import GoldValidator
 
 __all__ = [
@@ -43,6 +44,7 @@ __all__ = [
     "GoldValidationError",
     "GoldPipeline",
     "GoldV2Pipeline",
+    "GoldV3Pipeline",
     "GoldReader",
     "GoldSplitter",
     "GoldValidator",

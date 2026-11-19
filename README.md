@@ -57,25 +57,25 @@ Pinned VTSNLP source
        v                                  v
   Modeling V1                         Modeling V2
        |                                  |
-       +-----------+----------------------+
-                   |
-          Shared training factory
-          TF-IDF + LR / LinearSVC
-                   |
-            Validation metrics
-            + diagnostics
-                   |
-       Selected model -> held-out test
+       Shared training factory
+       TF-IDF + LR / LinearSVC
+
+  Silver V2 -> keyword review + approved News labels -> Silver V3
+                                                        |
+                                                        v
+                                            Gold V3 (new train/val/test)
 ```
 
 **Important boundaries:**
 
 - **Bronze** preserves sampled source records and provenance; it does not clean labels or text.
 - **Silver V1** validates, minimally normalizes and deduplicates. **Silver V2** reads a published Silver V1 snapshot and adds audited corpus-aware cleaning; its publication is opt-in.
-- **Gold V1/V2** produces immutable, versioned train/validation/test splits, label mapping, manifests and quality reports. It does **not** tokenize or create TF-IDF features. Gold V2 requires a complete published Silver V2 snapshot.
+- **Silver V3** starts from Silver V2, records keyword/overlap evidence and applies only reviewed label changes. **Gold V3** then creates new splits from Silver V3; it does not reuse Gold V2 membership.
+- **Gold V1/V2/V3** produces immutable, versioned train/validation/test splits, label mapping, manifests and quality reports. It does **not** tokenize or create TF-IDF features.
 - **Training** fits TF-IDF on training data and fits separate model parameters for each experiment. Modeling V2 **reuses the factory/code but never reuses V1's fitted model**.
 - **Evaluation** uses validation for comparison; access to the held-out test set is a separate explicit action. Keep track of manifest checksums, source lineage and experiment configuration.
 - Versioned data snapshots and experiment artifacts are never meant to overwrite one another. V1/V2 validation deltas **do not isolate the effect of cleaning**, because Gold split membership may differ.
+- V3 taxonomy exploration and label review happen before the Gold V3 split; record this full-pool taxonomy-development limitation when interpreting final test metrics.
 
 ## Repository structure
 
@@ -88,7 +88,8 @@ Pinned VTSNLP source
 ├── docs/                                # Guides, experiment notes, historical documents
 ├── notebooks/
 │   ├── v1/                              # Bronze -> Silver V1 -> Gold V1 -> Modeling V1
-│   └── v2/                              # Silver V2 -> Gold V2 -> Modeling V2
+│   ├── v2/                              # Silver V2 -> Gold V2 -> Modeling V2
+│   └── v3/                              # Silver V2 -> reviewed Silver V3 -> Gold V3
 ├── scripts/
 │   ├── 01_ingest_bronze.py
 │   ├── 02_build_silver.py
@@ -99,7 +100,10 @@ Pinned VTSNLP source
 │   ├── 07_evaluate_model.py
 │   ├── 08_plot_diagnostics.py
 │   ├── 09_build_silver_v2.py
-│   └── 10_build_gold_v2.py
+│   ├── 10_build_gold_v2.py
+│   ├── 13_build_silver_v3.py
+│   ├── 14_build_gold_v3.py
+│   └── 15_label_news_v3_local.py         # Optional local LLM suggestions (Colab GPU)
 ├── src/vietnamese_topic_classification/
 │   ├── __main__.py                      # vtc metadata/list-domains CLI
 │   ├── config/                          # Domain list and DataLakeConfig
@@ -108,12 +112,14 @@ Pinned VTSNLP source
 │   │   ├── silver/
 │   │   │   ├── v1/                      # Validation and normalization
 │   │   │   ├── v2/                      # Cleaning, corpus audit, publication
+│   │   │   ├── v3/                      # Reviewed label refinement from Silver V2
 │   │   │   └── reader.py               # Version-aware snapshot reader
 │   │   ├── gold/
 │   │   │   ├── v2/                      # V2 pipeline and lineage verification
+│   │   │   ├── v3/                      # New splits from Silver V3
 │   │   │   ├── pipeline.py              # V1 Gold implementation
 │   │   │   ├── splitter.py              # Deterministic, group-aware split
-│   │   │   └── reader.py                # Verify/read Gold V1 or V2
+│   │   │   └── reader.py                # Verify/read Gold V1, V2 or V3
 │   │   └── colab_lake.py               # Mounted Drive path resolution
 │   ├── training/                        # Config, dataset, factory, runner, artifacts
 │   └── evaluation/                      # Metrics, reports, diagnostics
@@ -188,17 +194,23 @@ DATA_LAKE_ROOT/
 ├── 01_bronze/                          # Raw source JSONL
 ├── 02_silver/
 │   ├── v1/                             # Silver V1 accepted/rejected
-│   └── v2/                             # Silver V2 accepted/rejected
+│   ├── v2/                             # Silver V2 accepted/rejected
+│   └── v3/                             # Reviewed Silver V3 labels
 ├── 03_gold/
 │   ├── manifests/                      # Gold V1 manifests
 │   ├── gold_*_v1_*.jsonl                # Gold V1 splits
-│   └── v2/
+│   ├── v2/
 │       ├── manifests/                  # Gold V2 manifests
 │       └── gold_*_v2_*.jsonl           # Gold V2 splits
+│   └── v3/
+│       ├── manifests/                  # Gold V3 manifests
+│       └── gold_*_v3_*.jsonl           # Gold V3 splits
 ├── 04_reports/
 │   ├── silver/v1/                       # Silver V1 quality reports
 │   ├── silver/v2/                       # Silver V2 reports/audits
+│   ├── silver/v3/                       # Keyword review + Silver V3 audits
 │   ├── gold/v2/                         # Gold V2 quality reports
+│   ├── gold/v3/                         # Gold V3 quality reports
 │   └── gold_quality_v1_*.json          # Gold V1 reports
 └── experiments/
     ├── tfidf_baselines_v1/             # Trained V1 experiments
@@ -231,6 +243,22 @@ The [V2 Data Lake end-to-end notebook](notebooks/v2/colab_data_lake_end_to_end.i
 
 For consistency, use an explicit `VTC_GIT_REF` when reviewing a feature branch; on `main` leave it unset. Publishing an immutable snapshot is not the same as a dry-run. Do not launch concurrent writes to the same target snapshot.
 
+### V3 — Silver V2 input, reviewed labels, new Gold splits
+
+V3 starts from a verified Silver V2 snapshot as its Bronze-equivalent input. Review
+keyword/overlap evidence and an up-to-300-row News pilot, freeze the taxonomy, then
+approve all News decisions before publishing Silver V3. Gold V3 creates new
+train/validation/test splits from the entire Silver V3 pool; it does not reuse Gold V2
+membership. The three provisional News child labels are subject to review against the
+corpus; sports articles use the existing `Sports` label instead of a duplicate subtype.
+Optional local LLM suggestions still require human approval. Use the dedicated
+[Silver V3](notebooks/v3/colab_silver_v3_runner.ipynb),
+[Gold V3](notebooks/v3/colab_gold_v3_runner.ipynb), and
+[Modeling V3](notebooks/v3/colab_modeling_v3_runner.ipynb) notebooks, or the
+[V3 end-to-end notebook](notebooks/v3/colab_end_to_end_v3.ipynb). Modeling trains on
+train and selects on validation; test is not used for training or model selection.
+See the [V3 workflow](docs/V3_NEWS_RELABELING.md).
+
 ## Run individual stages from the CLI
 
 With your environment activated and `DATA_LAKE_ROOT` pointing to an **existing** mounted/synced lake, the script entrypoints can be run from the repository root. Replace example filenames with **actual manifest/report names from your lake**.
@@ -252,6 +280,31 @@ python scripts/09_build_silver_v2.py --report-name "silver_quality_v1_YOUR_SNAPS
 # 5. Published Silver V2 -> Gold V2:
 python scripts/10_build_gold_v2.py --data-lake-root "/path/to/lake" \
   --report-name "silver_quality_v2_YOUR_SNAPSHOT.json"
+
+# 6. Analyze News subtypes and inspect a 300-row pilot:
+python scripts/13_build_silver_v3.py analyze \
+  --data-lake-root "/path/to/lake" \
+  --silver-v2-report "silver_quality_v2_YOUR_SNAPSHOT.json"
+python scripts/13_build_silver_v3.py pilot \
+  --data-lake-root "/path/to/lake" \
+  --silver-v2-report "silver_quality_v2_YOUR_SNAPSHOT.json" \
+  --output "/path/to/lake/04_reports/silver/v3/news_pilot.jsonl" \
+  --sample-size 300 --seed 42
+
+# After finalizing the taxonomy from the pilot, create the full News review file:
+python scripts/13_build_silver_v3.py prepare \
+  --data-lake-root "/path/to/lake" \
+  --silver-v2-report "silver_quality_v2_YOUR_SNAPSHOT.json" \
+  --output "/path/to/lake/04_reports/silver/v3/news_review.jsonl"
+
+# After review, publish Silver V3 and then build Gold V3:
+python scripts/13_build_silver_v3.py build \
+  --data-lake-root "/path/to/lake" \
+  --silver-v2-report "silver_quality_v2_YOUR_SNAPSHOT.json" \
+  --decisions "/path/to/lake/04_reports/silver/v3/news_review.jsonl"
+python scripts/14_build_gold_v3.py \
+  --data-lake-root "/path/to/lake" \
+  --silver-v3-report "silver_quality_v3_YOUR_SNAPSHOT.json"
 ```
 
 All steps verify their sources and use versioned outputs. Some already-published targets are reusable after verification; partial or conflicting publications deliberately raise errors. **Do not delete shared outputs simply to bypass these checks.** The Bronze ingestion may require internet access and the optional `data` dependencies. See [scripts guide](scripts/README.md), [Silver documentation](src/vietnamese_topic_classification/data/silver/README.md), [Gold V1 documentation](src/vietnamese_topic_classification/data/gold/README.md) and [Gold V2 documentation](docs/GOLD_V2.md).
@@ -311,11 +364,12 @@ Keep bulk data, credentials and generated models outside Git. `.gitignore` exclu
 - [Team Colab setup](docs/COLAB_TEAM_SETUP.md)
 - [Silver V2 cleaning](docs/SILVER_V2.md)
 - [Gold V2 and lineage checks](docs/GOLD_V2.md)
+- [Silver V3 and Gold V3 workflow](docs/V3_NEWS_RELABELING.md)
 - [Modeling V1/V2](docs/COLAB_MODELING.md)
 - [Notebook index](notebooks/README.md)
 - [Layer data models](src/vietnamese_topic_classification/data/LAYER_MODELS.md)
 
-**Implemented now:** Bronze/Silver V1/Silver V2/Gold V1/Gold V2 pipelines; immutable readers/manifests; TF-IDF + Logistic Regression/LinearSVC baselines; evaluation, diagnostics, Colab notebooks and offline CI tests.
+**Implemented now:** Bronze/Silver V1/V2/V3 and Gold V1/V2/V3 pipelines; immutable readers/manifests; TF-IDF + Logistic Regression/LinearSVC baselines; evaluation, diagnostics, Colab notebooks and offline CI tests. V3 taxonomy labels remain provisional pending review against the actual Drive data.
 
 **Not implemented as a production application:** a deployed inference API, web UI, image/video moderation, or Transformer/PhoBERT training. `apps/api` and `apps/web` are placeholders. Some older files such as [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) and [`docs/IMPLEMENTATION_PLAN.md`](docs/IMPLEMENTATION_PLAN.md) contain planned-stage wording from an earlier phase and should not override the current code/this README.
 

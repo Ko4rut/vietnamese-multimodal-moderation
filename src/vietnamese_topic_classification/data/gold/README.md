@@ -104,3 +104,16 @@ The full 50K near-duplicate candidate scan may need substantial time/RAM.
 ## Gold V2
 
 Gold V2 is implemented separately as `GoldV2Pipeline`, which reuses the validated V1 splitting algorithm while enforcing complete Silver V2 lineage. Output files and manifests live in `03_gold/v2/`, reports in `04_reports/gold/v2/`. The shared `GoldReader` resolves V2 manifest names automatically. See [Gold V2 guide](../../../../docs/GOLD_V2.md) and [Colab V2 runner](../../../../notebooks/v2/colab_gold_v2_runner.ipynb).
+
+## Gold V3
+
+`GoldV3Pipeline` consumes a verified Silver V3 snapshot. All reviewed label changes
+must already be present in Silver; Gold V3 only validates, assigns the configured
+label IDs, and creates fresh leakage-aware train/validation/test splits from the
+complete Silver V3 pool. It does not preserve Gold V2 split membership. Outputs are
+write-once under `03_gold/v3/` and `04_reports/gold/v3/`; the manifest records
+Silver V3 and upstream Silver V2/Silver V1 lineage. See the
+[V3 workflow](../../../../docs/V3_NEWS_RELABELING.md) and
+[V3 Gold runner](../../../../notebooks/v3/colab_gold_v3_runner.ipynb),
+[V3 Modeling runner](../../../../notebooks/v3/colab_modeling_v3_runner.ipynb), and
+[V3 end-to-end notebook](../../../../notebooks/v3/colab_end_to_end_v3.ipynb).

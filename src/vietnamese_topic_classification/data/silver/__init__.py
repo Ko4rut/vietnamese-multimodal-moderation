@@ -20,6 +20,7 @@ from .v1.model import (
 from .v1.pipeline import SilverPipeline
 from .v1.transformer import SilverTransformer
 from .v1.validator import SilverValidator
+from .v3 import SilverV3Pipeline
 
 __all__ = [
     "SilverRecord",
@@ -37,5 +38,6 @@ __all__ = [
     "SilverReader",
     "SilverTransformer",
     "SilverValidator",
+    "SilverV3Pipeline",
     "ValidationResult",
 ]
