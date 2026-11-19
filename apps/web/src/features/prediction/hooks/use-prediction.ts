@@ -1,80 +1,159 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { getDomains, getModelStatus, predictText } from "../api/client";
-import { EXAMPLES } from "../data/examples";
-import { getMockPredictionForText, MOCK_PREDICTIONS } from "../data/mock-predictions";
-import type { DomainLabel, InferenceMode, ModelStatus, PredictionView } from "../types";
+
+import { compareModels, getDomains, getModelCatalog, getModelStatus, predictText } from "../api/client";
+import { getResultModelPair } from "../utils/model-pair";
+import type { AvailableModel, DomainLabel, ModelStatus, Prediction } from "../types";
 
 export function usePrediction() {
-  const [mode, setMode] = useState<InferenceMode>("mock");
-  const [text, setText] = useState<string>(EXAMPLES[0].text);
+  const [text, setText] = useState<string>("");
   const [modelStatus, setModelStatus] = useState<ModelStatus | null>(null);
   const [statusError, setStatusError] = useState<string | null>(null);
+  const [models, setModels] = useState<AvailableModel[]>([]);
+  const [selectedModelId, setSelectedModelId] = useState<string | null>(null);
   const [domains, setDomains] = useState<DomainLabel[]>([]);
-  const [predictionView, setPredictionView] = useState<PredictionView | null>({
-    source: "mock",
-    data: MOCK_PREDICTIONS.technology,
-  });
-  const [chartRevision, setChartRevision] = useState<number>(0);
-  const [predictionError, setPredictionError] = useState<string | null>(null);
-  const [predicting, setPredicting] = useState<boolean>(false);
-  const [refreshing, setRefreshing] = useState<boolean>(false);
+
+  // Each model has its own genuine response, all scoped to the last analyzed input.
+  const [predictions, setPredictions] = useState<Record<string, Prediction>>({});
+  const [modelErrors, setModelErrors] = useState<Record<string, string>>({});
+  const [lastAnalyzedText, setLastAnalyzedText] = useState<string | null>(null);
+  const [chartRevision, setChartRevision] = useState(0);
+  const [requestError, setRequestError] = useState<string | null>(null);
+  const [predicting, setPredicting] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const predictController = useRef<AbortController | null>(null);
 
-  // The mock preview works fully offline; only live mode contacts FastAPI.
-  useEffect(() => {
-    if (mode !== "live") return;
-    const controller = new AbortController();
+  const resultModels = getResultModelPair(models, selectedModelId);
+  const hasFreshResults = lastAnalyzedText !== null && lastAnalyzedText === text.trim();
+  const prediction = hasFreshResults && selectedModelId
+    ? predictions[selectedModelId] ?? null : null;
+  const resultError = hasFreshResults && selectedModelId
+    ? modelErrors[selectedModelId] ?? null : null;
+  const predictionError = requestError ?? resultError;
 
-    void getModelStatus(controller.signal)
-      .then(setModelStatus)
+  useEffect(() => {
+    const controller = new AbortController();
+    void getModelCatalog(controller.signal)
+      .then((catalog) => {
+        if (controller.signal.aborted) return;
+        setModels(catalog.models);
+        setSelectedModelId((current) =>
+          current && catalog.models.some((model) => model.id === current)
+            ? current : catalog.default_model_id
+        );
+        setStatusError(catalog.models.length
+          ? null : "Chưa có experiment. Thêm model đã train vào thư mục models/.");
+      })
       .catch((error: unknown) => {
         if (!controller.signal.aborted) {
-          setStatusError(error instanceof Error ? error.message : "Không thể kiểm tra model.");
+          setStatusError(error instanceof Error ? error.message : "Không kết nối được FastAPI.");
         }
       });
-    void getDomains(controller.signal).then(setDomains).catch(() => {
-      // When offline, the domain browser uses a labeled reference list.
-    });
 
+    void getDomains(controller.signal)
+      .then((labels) => { if (!controller.signal.aborted) setDomains(labels); })
+      .catch(() => { /* Keep the canonical label reference if the API is offline. */ });
     return () => controller.abort();
-  }, [mode]);
+  }, []);
 
-  // Stop outstanding prediction requests on unmount.
+  useEffect(() => {
+    if (!selectedModelId) return;
+    const controller = new AbortController();
+    void getModelStatus(selectedModelId, controller.signal)
+      .then((status) => {
+        if (controller.signal.aborted) return;
+        setModelStatus(status);
+        setStatusError(status.ready ? null : status.message);
+      })
+      .catch((error: unknown) => {
+        if (!controller.signal.aborted) {
+          setModelStatus(null);
+          setStatusError(error instanceof Error ? error.message : "Không kiểm tra được model.");
+        }
+      });
+    return () => controller.abort();
+  }, [selectedModelId]);
+
   useEffect(() => () => predictController.current?.abort(), []);
 
   const refreshStatus = useCallback(async () => {
-    if (mode !== "live") return;
+    predictController.current?.abort();
+    setPredicting(false);
+    setPredictions({});
+    setModelErrors({});
+    setLastAnalyzedText(null);
+    setRequestError(null);
     setRefreshing(true);
     try {
-      const next = await getModelStatus();
-      setModelStatus(next);
-      setStatusError(null);
-      const latestDomains = await getDomains().catch(() => null);
-      if (latestDomains) setDomains(latestDomains);
-    } catch (error) {
+      const catalog = await getModelCatalog();
+      setModels(catalog.models);
+      const selected = selectedModelId && catalog.models.some((model) => model.id === selectedModelId)
+        ? selectedModelId : catalog.default_model_id;
+      setSelectedModelId(selected);
+      if (selected) {
+        const status = await getModelStatus(selected);
+        setModelStatus(status);
+        setStatusError(status.ready ? null : status.message);
+      } else {
+        setModelStatus(null);
+        setStatusError("Chưa có experiment. Thêm model đã train vào thư mục models/.");
+      }
+      const labels = await getDomains().catch(() => null);
+      if (labels) setDomains(labels);
+    } catch (error: unknown) {
       setModelStatus(null);
       setStatusError(error instanceof Error ? error.message : "Không thể kết nối backend.");
     } finally {
       setRefreshing(false);
     }
-  }, [mode]);
+  }, [selectedModelId]);
 
-  function changeMode(next: InferenceMode) {
-    if (next === mode) return;
+  async function loadUncachedModel(modelId: string, analyzedText: string) {
     predictController.current?.abort();
-    setPredicting(false);
-    setMode(next);
-    setPredictionError(null);
-    if (next === "mock") {
-      const fixture = getMockPredictionForText(text);
-      setPredictionView(fixture ? { source: "mock", data: fixture } : null);
-      setChartRevision((revision) => revision + 1);
-    } else {
-      setPredictionView(null);
-      setModelStatus(null);
-      setStatusError(null);
+    const controller = new AbortController();
+    predictController.current = controller;
+    setPredicting(true);
+    setRequestError(null);
+    try {
+      const result = await predictText(analyzedText, modelId, controller.signal);
+      if (!controller.signal.aborted) {
+        setPredictions((current) => ({ ...current, [modelId]: result }));
+        setModelErrors((current) => {
+          const updated = { ...current };
+          delete updated[modelId];
+          return updated;
+        });
+        setChartRevision((current) => current + 1);
+      }
+    } catch (error: unknown) {
+      if (!controller.signal.aborted) {
+        setModelErrors((current) => ({
+          ...current,
+          [modelId]: error instanceof Error ? error.message : "Model không thể suy luận.",
+        }));
+      }
+    } finally {
+      if (!controller.signal.aborted) setPredicting(false);
+    }
+  }
+
+  function selectModel(modelId: string) {
+    if (modelId === selectedModelId || !models.some((model) => model.id === modelId)) return;
+    setSelectedModelId(modelId);
+    setModelStatus(null);
+    setStatusError(null);
+    setRequestError(null);
+
+    // The first analysis caches both model results. Other registered experiments
+    // are inferred lazily with the same text and kept in the cache thereafter.
+    if (
+      !predicting &&
+      hasFreshResults &&
+      !predictions[modelId] &&
+      !modelErrors[modelId]
+    ) {
+      void loadUncachedModel(modelId, text.trim());
     }
   }
 
@@ -82,56 +161,66 @@ export function usePrediction() {
     predictController.current?.abort();
     setPredicting(false);
     setText(value);
-    setPredictionError(null);
-    if (mode === "mock") {
-      const fixture = getMockPredictionForText(value);
-      setPredictionView(fixture ? { source: "mock", data: fixture } : null);
-      setChartRevision((revision) => revision + 1);
-    } else {
-      setPredictionView(null);
-    }
+    setPredictions({});
+    setModelErrors({});
+    setLastAnalyzedText(null);
+    setRequestError(null);
   }
 
   async function runPrediction() {
     const clean = text.trim();
     if (clean.length < 3 || clean.length > 10000) {
-      setPredictionError("Vui lòng nhập văn bản từ 3 đến 10.000 ký tự.");
+      setRequestError("Vui lòng nhập văn bản từ 3 đến 10.000 ký tự.");
+      return;
+    }
+    if (!selectedModelId || modelStatus?.ready !== true || modelStatus.model_id !== selectedModelId) {
+      setRequestError("Chưa có model sẵn sàng. Kiểm tra trạng thái model và thử lại.");
       return;
     }
 
-    if (mode === "mock") {
-      const fixture = getMockPredictionForText(text);
-      if (!fixture) {
-        setPredictionView(null);
-        setPredictionError("Mock Preview chỉ có 4 ví dụ cố định. Hãy chọn một ví dụ bên trên hoặc chuyển sang AI thực để phân tích nội dung tự nhập.");
-        return;
-      }
-      setPredictionError(null);
-      setPredictionView({ source: "mock", data: fixture });
-      setChartRevision((revision) => revision + 1);
-      return;
-    }
-
-    if (modelStatus?.ready === false) {
-      setPredictionError("Model chưa sẵn sàng. Hãy kết nối backend và tải model đã train.");
-      return;
-    }
-
+    const ids = getResultModelPair(models, selectedModelId).map((model) => model.id);
     predictController.current?.abort();
     const controller = new AbortController();
     predictController.current = controller;
     setPredicting(true);
-    setPredictionView(null);
-    setPredictionError(null);
+    setRequestError(null);
+    setPredictions({});
+    setModelErrors({});
+    setLastAnalyzedText(null);
+
     try {
-      const result = await predictText(clean, controller.signal);
-      if (!controller.signal.aborted) {
-        setPredictionView({ source: "live", data: result });
-        setChartRevision((revision) => revision + 1);
+      if (ids.length === 2) {
+        // Inference runs once for both models; changing tabs only changes the view.
+        const response = await compareModels(clean, ids, controller.signal);
+        if (controller.signal.aborted) return;
+        const nextPredictions: Record<string, Prediction> = {};
+        const nextErrors: Record<string, string> = {};
+        for (const item of response.results) {
+          if (!ids.includes(item.model_id)) continue;
+          if (item.status === "ok" && item.prediction?.model_id === item.model_id) {
+            nextPredictions[item.model_id] = item.prediction;
+          } else {
+            nextErrors[item.model_id] = item.error ?? "Model không thể trả kết quả.";
+          }
+        }
+        for (const id of ids) {
+          if (!nextPredictions[id] && !nextErrors[id]) {
+            nextErrors[id] = "API không trả kết quả cho model này.";
+          }
+        }
+        setPredictions(nextPredictions);
+        setModelErrors(nextErrors);
+      } else {
+        // Backwards-compatible single model, when only one is installed.
+        const result = await predictText(clean, selectedModelId, controller.signal);
+        if (controller.signal.aborted) return;
+        setPredictions({ [selectedModelId]: result });
       }
-    } catch (error) {
+      setLastAnalyzedText(clean);
+      setChartRevision((current) => current + 1);
+    } catch (error: unknown) {
       if (!controller.signal.aborted) {
-        setPredictionError(error instanceof Error ? error.message : "Không thể phân tích văn bản.");
+        setRequestError(error instanceof Error ? error.message : "Không thể phân tích văn bản.");
       }
     } finally {
       if (!controller.signal.aborted) setPredicting(false);
@@ -139,8 +228,8 @@ export function usePrediction() {
   }
 
   return {
-    mode, changeMode, text, updateText, modelStatus, statusError, domains,
-    predictionView, chartRevision, predictionError, predicting,
-    refreshing, refreshStatus, runPrediction,
+    text, updateText, modelStatus, statusError, models, selectedModelId,
+    selectModel, domains, prediction, resultModels, resultError, chartRevision,
+    predictionError, predicting, refreshing, refreshStatus, runPrediction,
   };
 }

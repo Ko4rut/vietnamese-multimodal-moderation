@@ -13,6 +13,17 @@ from vietnamese_topic_classification.training.factory import build_pipeline
 client = TestClient(app)
 
 
+@pytest.fixture(autouse=True)
+def isolate_local_models(tmp_path, monkeypatch):
+    """Offline tests should not load real joblib files from a developer's models/."""
+    monkeypatch.delenv("VTC_MODELS_ROOT", raising=False)
+    monkeypatch.delenv("VTC_DEFAULT_MODEL", raising=False)
+    monkeypatch.setattr(
+        "apps.api.service.registry._default_models_root", lambda: tmp_path / "models"
+    )
+
+
+
 def test_missing_model_is_explicit(monkeypatch):
     monkeypatch.delenv("VTC_MODEL_DIR", raising=False)
     response = client.get("/api/status")

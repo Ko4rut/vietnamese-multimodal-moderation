@@ -9,6 +9,7 @@ interface SidebarProps {
 
 const navItems = [
   { href: "#playground", icon: "sparkles" as const, label: "AI Playground" },
+  { href: "#compare", icon: "layers" as const, label: "So sánh mô hình" },
   { href: "#model", icon: "chart" as const, label: "Thông tin mô hình" },
   { href: "#domains", icon: "grid" as const, label: "25 lĩnh vực" },
 ];

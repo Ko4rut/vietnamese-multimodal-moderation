@@ -1,81 +1,42 @@
-"""HTTP adapter for text-only, single-label Vietnamese topic inference."""
+"""ASGI composition root for the Vietnamese topic inference service.
 
-from __future__ import annotations
+HTTP routes live in route/, validation contracts in schema/, and the
+trained-model registry/loading/inference logic in service/.
+"""
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field
 
-from vietnamese_topic_classification.config import get_domain_labels
-
-from .model_service import ModelUnavailable, get_loaded_model, predict_text
-
-app = FastAPI(
-    title="Vietnamese Topic Classification Demo API",
-    version="0.1.0",
-    description="Text-only inference with a trusted, pre-trained scikit-learn experiment.",
-)
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
-    allow_credentials=False,
-    allow_methods=["GET", "POST"],
-    allow_headers=["Content-Type"],
-)
+from .route.health import router as health_router
+from .route.model import router as model_router
+from .route.prediction import router as prediction_router
 
 
-class PredictRequest(BaseModel):
-    text: str = Field(min_length=3, max_length=10000)
+def create_app() -> FastAPI:
+    app = FastAPI(
+        title="Vietnamese Topic Classification Inference API",
+        version="0.2.0",
+        description=(
+            "Inference for trusted existing TF-IDF + Logistic Regression / LinearSVC "
+            "experiments; no retraining or model uploads."
+        ),
+    )
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=[
+            "http://localhost:3000",
+            "http://127.0.0.1:3000",
+            "http://localhost:5173",
+            "http://127.0.0.1:5173",
+        ],
+        allow_credentials=False,
+        allow_methods=["GET", "POST"],
+        allow_headers=["Content-Type"],
+    )
+    app.include_router(health_router, prefix="/api", tags=["Health"])
+    app.include_router(model_router, prefix="/api", tags=["Models"])
+    app.include_router(prediction_router, prefix="/api", tags=["Prediction"])
+    return app
 
 
-@app.get("/api/health")
-def health() -> dict[str, str]:
-    return {"status": "ok"}
-
-
-@app.get("/api/status")
-def status() -> dict[str, object]:
-    """A missing artifact must not prevent the API or the web app from starting."""
-    try:
-        model = get_loaded_model()
-    except ModelUnavailable as exc:
-        return {
-            "ready": False,
-            "message": str(exc),
-            "labels_count": len(get_domain_labels()),
-            "model_name": None,
-            "classifier": None,
-            "validation_macro_f1": None,
-        }
-    return {
-        "ready": True,
-        "message": "Model đã sẵn sàng.",
-        "labels_count": len(get_domain_labels()),
-        "model_name": model.experiment_name,
-        "classifier": model.classifier,
-        "validation_macro_f1": model.validation_macro_f1,
-    }
-
-
-@app.get("/api/labels")
-def labels() -> dict[str, object]:
-    return {
-        "labels": [
-            {"id": idx, "name": name} for idx, name in enumerate(get_domain_labels())
-        ]
-    }
-
-
-@app.post("/api/predict")
-def predict(request: PredictRequest) -> dict[str, object]:
-    text = request.text.strip()
-    if len(text) < 3:
-        raise HTTPException(status_code=422, detail="Vui lòng nhập ít nhất 3 ký tự.")
-    try:
-        model = get_loaded_model()
-    except ModelUnavailable as exc:
-        raise HTTPException(status_code=503, detail=str(exc)) from exc
-    try:
-        return predict_text(model, text)
-    except (ValueError, TypeError, AttributeError) as exc:
-        raise HTTPException(status_code=500, detail="Model không thể dự đoán văn bản này.") from exc
+app = create_app()

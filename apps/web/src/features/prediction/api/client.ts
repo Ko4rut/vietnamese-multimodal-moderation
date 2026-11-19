@@ -1,4 +1,4 @@
-import type { DomainLabel, ModelStatus, Prediction } from "../types";
+import type { DomainLabel, ModelCatalog, ModelStatus, Prediction, CompareResponse } from "../types";
 
 async function requestJson<T>(path: string, options: RequestInit = {}): Promise<T> {
   let response: Response;
@@ -21,15 +21,20 @@ async function requestJson<T>(path: string, options: RequestInit = {}): Promise<
       typeof detail === "string"
         ? detail
         : response.status === 503
-          ? "Model chưa sẵn sàng. Hãy cấu hình VTC_MODEL_DIR trên backend."
+          ? "Model chưa sẵn sàng. Hãy thêm artifact vào models/ hoặc cấu hình VTC_MODELS_ROOT."
           : "Yêu cầu thất bại (HTTP " + response.status + ").",
     );
   }
   return payload as T;
 }
 
-export function getModelStatus(signal?: AbortSignal): Promise<ModelStatus> {
-  return requestJson<ModelStatus>("status", { signal });
+export function getModelCatalog(signal?: AbortSignal): Promise<ModelCatalog> {
+  return requestJson<ModelCatalog>("models", { signal });
+}
+
+export function getModelStatus(modelId?: string | null, signal?: AbortSignal): Promise<ModelStatus> {
+  const query = modelId ? "?model_id=" + encodeURIComponent(modelId) : "";
+  return requestJson<ModelStatus>("status" + query, { signal });
 }
 
 export async function getDomains(signal?: AbortSignal): Promise<DomainLabel[]> {
@@ -37,10 +42,23 @@ export async function getDomains(signal?: AbortSignal): Promise<DomainLabel[]> {
   return data.labels;
 }
 
-export function predictText(text: string, signal?: AbortSignal): Promise<Prediction> {
+export function predictText(text: string, modelId?: string | null, signal?: AbortSignal): Promise<Prediction> {
   return requestJson<Prediction>("predict", {
     method: "POST",
-    body: JSON.stringify({ text }),
+    body: JSON.stringify({ text, ...(modelId ? { model_id: modelId } : {}) }),
+    signal,
+  });
+}
+
+/** Run 2-4 registered models on one shared text, without synthesizing scores. */
+export function compareModels(
+  text: string,
+  modelIds: string[],
+  signal?: AbortSignal,
+): Promise<CompareResponse> {
+  return requestJson<CompareResponse>("compare", {
+    method: "POST",
+    body: JSON.stringify({ text, model_ids: modelIds }),
     signal,
   });
 }

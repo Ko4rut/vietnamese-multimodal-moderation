@@ -1,12 +1,24 @@
 export type Classifier = "logistic_regression" | "linear_svc";
 export type ScoreKind = "probability" | "decision_margin";
 
-/** Whether the visible prediction is a frontend-only example or an API response. */
-export type InferenceMode = "mock" | "live";
+/** Metadata emitted by GET /api/models (not a guarantee of load readiness). */
+export interface AvailableModel {
+  id: string;
+  model_name: string;
+  classifier: Classifier;
+  validation_macro_f1: number | null;
+  sklearn_version: string | null;
+}
+
+export interface ModelCatalog {
+  models: AvailableModel[];
+  default_model_id: string | null;
+}
 
 export interface ModelStatus {
   ready: boolean;
   message: string;
+  model_id: string | null;
   labels_count: number;
   model_name: string | null;
   classifier: Classifier | null;
@@ -24,8 +36,9 @@ export interface RankedPrediction {
   score: number;
 }
 
-/** Matches POST /api/predict exactly; also reused by typed demo fixtures. */
+/** Matches POST /api/predict. */
 export interface Prediction {
+  model_id?: string;
   model_name: string;
   label_id: number;
   label: string;
@@ -33,9 +46,16 @@ export interface Prediction {
   top_predictions: RankedPrediction[];
 }
 
-export interface PredictionView {
-  source: InferenceMode;
-  data: Prediction;
+/** Per-model result from POST /api/compare. */
+export interface ComparisonResult {
+  model_id: string;
+  status: "ok" | "error";
+  prediction: Prediction | null;
+  error: string | null;
+}
+
+export interface CompareResponse {
+  results: ComparisonResult[];
 }
 
 export function humanizeDomain(domain: string): string {
