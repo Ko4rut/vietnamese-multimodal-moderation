@@ -75,24 +75,6 @@
 .prediction-chart-label-winner .prediction-chart-label-name { color: var(--primary-text); font-weight: 800; }
 .prediction-chart-caption { margin: 16px 0 0; text-align: center; color: var(--muted); font-size: 10px; line-height: 1.6; }
 
-.prediction-chart-preview {
-  display: flex; align-items: flex-end; justify-content: space-between;
-  gap: 10px; height: 148px; width: min(265px, 100%);
-  margin: 6px auto 21px; padding: 0 13px 0;
-  border-bottom: 1px dashed var(--border-strong);
-  background: repeating-linear-gradient(to top, transparent 0px, transparent 36px, var(--border) 37px);
-}
-.prediction-chart-preview-bar {
-  display: block; flex: 1; max-width: 38px; min-height: 12px;
-  border: 1px dashed var(--border-strong); border-radius: 7px 7px 0 0;
-  background: linear-gradient(to top, var(--primary-light), var(--surface-soft));
-  opacity: .8;
-}
-.is-analyzing .prediction-chart-preview-bar {
-  transform-origin: center bottom;
-  animation: prediction-preview-pulse 900ms ease-in-out infinite alternate;
-}
-
 @keyframes prediction-column-rise {
   0% { transform: scaleY(0); opacity: .45; }
   65% { transform: scaleY(1.055); opacity: 1; }
@@ -102,10 +84,6 @@
 @keyframes prediction-score-appear {
   from { opacity: 0; translate: 0 7px; }
   to { opacity: 1; translate: 0 0; }
-}
-@keyframes prediction-preview-pulse {
-  from { transform: scaleY(.4); opacity: .35; }
-  to { transform: scaleY(1); opacity: .9; }
 }
 @media (max-width: 680px) {
   .prediction-chart-plot { grid-template-columns: 29px minmax(0, 1fr); column-gap: 5px; }
@@ -118,7 +96,7 @@
   .prediction-chart-key { font-size: 9px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .prediction-chart-bar, .prediction-chart-score, .prediction-chart-preview-bar {
+  .prediction-chart-bar, .prediction-chart-score {
     animation: none !important; opacity: 1; transform: none;
   }
 }
