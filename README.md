@@ -334,8 +334,7 @@ ship the large model files. Run these commands from the repository root:
 
 ```bash
 python -m pip install -e ".[api]"
-export VTC_MODELS_ROOT="/path/to/lake/experiments"
-export VTC_DEFAULT_MODEL="tfidf_linear_svc_v2_9ff85ff3a7"
+# Copy trusted experiment folders from Drive to ./models/<experiment-name>/
 fastapi dev
 ```
 
@@ -348,10 +347,13 @@ npm run dev
 ```
 
 Open http://localhost:3000. API health: http://localhost:8000/api/health;
-model readiness: http://localhost:8000/api/status. With no configured artifacts,
-real inference returns unavailable, but the frontend can still display its
-explicitly labeled Mock Preview. On Windows use PowerShell environment variables
-(`$env:VTC_MODELS_ROOT`) or `scripts/run_inference_api.ps1`. For LinearSVC, values are raw decision margins,
-not probabilities. The FastAPI CLI entrypoint is defined in `pyproject.toml` so run `fastapi dev`
-from repository root. The three backend packages are `route/`, `schema/`,
+model readiness: http://localhost:8000/api/status. FastAPI discovers complete
+experiments in the repository's `models/` automatically without environment
+variables or a fixed working directory. New folders appear on the next request;
+replacing an already-loaded model requires a restart. Without artifacts, the
+frontend still has its explicit Mock Preview, while real inference is unavailable.
+For external model storage, use `VTC_MODELS_ROOT` or the optional
+`scripts/run_inference_api.ps1 -ModelsRoot ...` helper. For LinearSVC, values
+are raw decision margins, not probabilities. The CLI entrypoint is configured
+in `pyproject.toml`; the backend packages remain `route/`, `schema/`,
 and `service/`; see [apps/api](apps/api/README.md) for details.

@@ -21,7 +21,7 @@ async function requestJson<T>(path: string, options: RequestInit = {}): Promise<
       typeof detail === "string"
         ? detail
         : response.status === 503
-          ? "Model chưa sẵn sàng. Hãy cấu hình VTC_MODEL_DIR trên backend."
+          ? "Model chưa sẵn sàng. Hãy thêm artifact vào models/ hoặc cấu hình VTC_MODELS_ROOT."
           : "Yêu cầu thất bại (HTTP " + response.status + ").",
     );
   }

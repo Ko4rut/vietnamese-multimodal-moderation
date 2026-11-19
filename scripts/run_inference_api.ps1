@@ -1,5 +1,5 @@
-# Execute from the repo root with:
-# .\scripts\run_inference_api.ps1 -ModelsRoot "E:\path\to\experiments"
+# Run from the repository root with no parameters to auto-discover ./models/.
+# Override if needed: ./scripts/run_inference_api.ps1 -ModelsRoot "E:/models/experiments"
 param(
     [string] $ModelsRoot,
     [string] $ModelDir,
