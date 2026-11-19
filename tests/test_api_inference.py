@@ -18,10 +18,14 @@ client = TestClient(app)
 
 
 @pytest.fixture(autouse=True)
-def clear_configuration(monkeypatch):
+def clear_configuration(monkeypatch, tmp_path):
     monkeypatch.delenv("VTC_MODEL_DIR", raising=False)
     monkeypatch.delenv("VTC_MODELS_ROOT", raising=False)
     monkeypatch.delenv("VTC_DEFAULT_MODEL", raising=False)
+    # Do not touch a developer's real model files during the test suite.
+    monkeypatch.setattr(
+        "apps.api.service.registry._default_models_root", lambda: tmp_path / "models"
+    )
     _load_pipeline.cache_clear()
     yield
     _load_pipeline.cache_clear()
@@ -102,6 +106,46 @@ def test_existing_baseline_can_serve_real_http_predictions(
         assert all(0 <= value <= 1 for value in scores)
     else:
         assert all(isinstance(value, float) for value in scores)
+
+
+def test_auto_discovery_from_project_models_directory(tmp_path):
+    root = tmp_path / "models"
+    assert client.get("/api/models").json() == {"models": [], "default_model_id": None}
+
+    name = "tfidf_linear_svc_v2_9ff85ff3a7"
+    make_artifact(root / name, "linear_svc", name)
+
+    # The next GET sees the model; no environment variable or API restart needed.
+    catalog = client.get("/api/models")
+    assert catalog.status_code == 200
+    assert [item["id"] for item in catalog.json()["models"]] == [name]
+    assert catalog.json()["default_model_id"] == name
+    assert client.get("/api/status").json()["ready"] is True
+    result = client.post("/api/predict", json={"text": "đội tuyển bóng đá Việt Nam"})
+    assert result.status_code == 200
+    assert result.json()["model_id"] == name
+
+
+def test_auto_discovery_skips_invalid_metadata_without_hiding_good_model(tmp_path):
+    root = tmp_path / "models"
+    make_artifact(root / "good", "logistic_regression", "good_model")
+    bad = make_artifact(root / "bad", "linear_svc", "bad_model")
+    (bad / "metadata.json").write_text("{invalid JSON", encoding="utf-8")
+
+    catalog = client.get("/api/models")
+    assert catalog.status_code == 200
+    assert [item["id"] for item in catalog.json()["models"]] == ["good_model"]
+    assert client.get("/api/status").json()["ready"] is True
+
+
+def test_explicit_root_overrides_local_default(tmp_path, monkeypatch):
+    make_artifact(tmp_path / "models" / "local", "linear_svc", "local_model")
+    external = tmp_path / "external"
+    make_artifact(external / "remote", "logistic_regression", "remote_model")
+    monkeypatch.setenv("VTC_MODELS_ROOT", str(external))
+
+    catalog = client.get("/api/models").json()
+    assert [item["id"] for item in catalog["models"]] == ["remote_model"]
 
 
 def test_catalog_selects_between_v1_v2_experiments(tmp_path, monkeypatch):

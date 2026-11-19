@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import math
 import os
 import re
@@ -13,6 +14,13 @@ from .types import MODEL_FILES, ModelDescriptor, ModelNotFound, ModelUnavailable
 
 MODEL_ID_PATTERN = re.compile(r"[A-Za-z0-9][A-Za-z0-9_-]*\Z")
 
+LOGGER = logging.getLogger(__name__)
+
+
+def _default_models_root() -> Path:
+    """Resolve project-local models/ independently of the working directory."""
+    return Path(__file__).resolve().parents[3] / "models"
+
 
 def _read_json(path: Path) -> dict[str, Any]:
     data = json.loads(path.read_text(encoding="utf-8"))
@@ -22,22 +30,30 @@ def _read_json(path: Path) -> dict[str, Any]:
 
 
 def _discover_directories() -> list[Path]:
-    """Locate complete experiment folders under VTC_MODELS_ROOT or VTC_MODEL_DIR."""
+    """Discover project-local experiments, unless an explicit path overrides them."""
     directories: set[Path] = set()
     root_value = os.getenv("VTC_MODELS_ROOT", "").strip()
-    if root_value:
-        root = Path(root_value).expanduser().resolve()
-        if not root.is_dir():
-            raise ModelUnavailable("VTC_MODELS_ROOT không tồn tại hoặc không phải thư mục.")
-        # This root should contain experiment folders, not the entire Data Lake.
-        for metadata in root.rglob("metadata.json"):
-            directory = metadata.parent.resolve()
-            if not directory.is_relative_to(root):
-                continue
-            if all((directory / filename).is_file() for filename in MODEL_FILES):
-                directories.add(directory)
-
     single_value = os.getenv("VTC_MODEL_DIR", "").strip()
+
+    root = (
+        Path(root_value).expanduser().resolve()
+        if root_value
+        else (_default_models_root() if not single_value else None)
+    )
+    if root is not None:
+        if not root.is_dir():
+            if root_value:
+                raise ModelUnavailable("VTC_MODELS_ROOT không tồn tại hoặc không phải thư mục.")
+            # An empty fresh checkout is valid; models/ can be added later.
+        else:
+            resolved_root = root.resolve()
+            for metadata in root.rglob("metadata.json"):
+                directory = metadata.parent.resolve()
+                if not directory.is_relative_to(resolved_root):
+                    continue
+                if all((directory / filename).is_file() for filename in MODEL_FILES):
+                    directories.add(directory)
+
     if single_value:
         directory = Path(single_value).expanduser().resolve()
         if not directory.is_dir() or not all(
@@ -97,10 +113,21 @@ def _descriptor_for(directory: Path) -> ModelDescriptor:
 
 
 def list_models() -> list[ModelDescriptor]:
-    """Read lightweight metadata; never unpickle models during discovery."""
+    """Read metadata on every request; never unpickle during discovery."""
     found: dict[str, ModelDescriptor] = {}
+    explicit = bool(
+        os.getenv("VTC_MODELS_ROOT", "").strip()
+        or os.getenv("VTC_MODEL_DIR", "").strip()
+    )
     for directory in _discover_directories():
-        descriptor = _descriptor_for(directory)
+        try:
+            descriptor = _descriptor_for(directory)
+        except ModelUnavailable:
+            if explicit:
+                raise
+            # A malformed local artifact must not hide other valid experiments.
+            LOGGER.warning("Bỏ qua artifact không hợp lệ: %s", directory, exc_info=True)
+            continue
         if descriptor.model_id in found and found[descriptor.model_id].directory != directory:
             raise ModelUnavailable(
                 f"Trùng tên experiment '{descriptor.model_id}'. Hãy giữ mỗi tên một bản."
@@ -123,7 +150,7 @@ def resolve_descriptor(model_id: str | None) -> ModelDescriptor:
     selected = model_id if model_id is not None else default_model_id(descriptors)
     if selected is None:
         raise ModelUnavailable(
-            "Chưa có artifact. Hãy cấu hình VTC_MODEL_DIR hoặc VTC_MODELS_ROOT."
+            "Chưa có artifact. Đặt experiment vào models/ hoặc cấu hình VTC_MODELS_ROOT."
         )
     for descriptor in descriptors:
         if descriptor.model_id == selected:
