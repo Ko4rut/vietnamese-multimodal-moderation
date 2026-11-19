@@ -3,11 +3,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { getDomains, getModelCatalog, getModelStatus, predictText } from "../api/client";
-import { EXAMPLES } from "../data/examples";
 import type { AvailableModel, DomainLabel, ModelStatus, Prediction } from "../types";
 
 export function usePrediction() {
-  const [text, setText] = useState<string>(EXAMPLES[0].text);
+  const [text, setText] = useState<string>("");
   const [modelStatus, setModelStatus] = useState<ModelStatus | null>(null);
   const [statusError, setStatusError] = useState<string | null>(null);
   const [models, setModels] = useState<AvailableModel[]>([]);
