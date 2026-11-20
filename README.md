@@ -103,7 +103,8 @@ Pinned VTSNLP source
 │   ├── 10_build_gold_v2.py
 │   ├── 13_build_silver_v3.py
 │   ├── 14_build_gold_v3.py
-│   └── 15_label_news_v3_local.py         # Optional local LLM suggestions (Colab GPU)
+│   ├── 15_label_news_v3_local.py         # Optional local LLM suggestions (Colab GPU)
+│   └── 16_generate_bronze_news_eda_notebook.py  # Regenerates the Bronze News EDA notebook
 ├── src/vietnamese_topic_classification/
 │   ├── __main__.py                      # vtc metadata/list-domains CLI
 │   ├── config/                          # Domain list and DataLakeConfig
@@ -258,6 +259,8 @@ Optional local LLM suggestions still require human approval. Use the dedicated
 [V3 end-to-end notebook](notebooks/v3/colab_end_to_end_v3.ipynb). Modeling trains on
 train and selects on validation; test is not used for training or model selection.
 See the [V3 workflow](docs/V3_NEWS_RELABELING.md).
+
+**News grey-zone exploration (read-only):** [`notebooks/v3/eda/01_bronze_news_eda_colab.ipynb`](notebooks/v3/eda/01_bronze_news_eda_colab.ipynb) runs EDA, TF-IDF + LSA and a comparison of clustering algorithms on the Bronze `News` rows (Colab, CPU, results written to your My Drive, never to the Data Lake). See [docs/BRONZE_NEWS_EDA.md](docs/BRONZE_NEWS_EDA.md).
 
 ## Run individual stages from the CLI
 

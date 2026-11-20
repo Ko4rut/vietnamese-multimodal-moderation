@@ -51,7 +51,7 @@ where = ["src"]
 include = ["vietnamese_topic_classification*"]
 
 [tool.setuptools.package-data]
-vietnamese_topic_classification = ["config/*.yaml"]
+vietnamese_topic_classification = ["config/*.yaml", "analysis/bronze_news/*.yaml"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

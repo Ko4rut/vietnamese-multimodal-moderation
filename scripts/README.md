@@ -56,3 +56,5 @@ needs neither the `data` nor the `eda` dependency extras.
 ## Label survey notebook
 
 `python scripts/11_generate_label_survey_notebook.py` regenerates `notebooks/v2/eda/02_label_survey_colab.ipynb` (`--check` verifies it is up to date). Install `python -m pip install -e ".[dev,survey]"` to run the survey package and its tests. See `docs/LABEL_SURVEY.md`.
+
+`python scripts/16_generate_bronze_news_eda_notebook.py` regenerates `notebooks/v3/eda/01_bronze_news_eda_colab.ipynb` (`--check` verifies it is up to date). The notebook runs EDA, TF-IDF + LSA and clustering on the Bronze `News` rows; its code lives in `src/vietnamese_topic_classification/analysis/bronze_news/`. Install `python -m pip install -e ".[dev,survey]"` to run it and its tests. See `docs/BRONZE_NEWS_EDA.md`.

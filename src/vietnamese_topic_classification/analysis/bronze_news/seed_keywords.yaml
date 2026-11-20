@@ -1,0 +1,224 @@
+# Seed keywords used to *suggest* a V3 label for a News cluster. Easy to edit.
+#
+# - Keys must be labels of config/domains_v3.yaml (checked by a test).
+# - Terms are lowercase Vietnamese syllables, written exactly like the TF-IDF terms:
+#   one syllable ("bầu") or two syllables separated by one space ("bầu cử").
+#   A one-syllable seed matches the same one-syllable term. A two-syllable seed matches the
+#   same bigram, or (at half weight) both syllables when they are among the cluster's top terms.
+# - The result is a scored hint that needs human review. It is NOT a label.
+News_Politics:
+  - chính trị
+  - bầu cử
+  - quốc hội
+  - đại biểu
+  - đảng
+  - tổng thống
+  - thủ tướng
+  - chủ tịch
+  - ngoại giao
+  - đại sứ
+  - hội nghị
+  - thượng đỉnh
+  - đối thoại
+  - nghị sĩ
+  - chính phủ
+  - lãnh đạo
+  - bộ trưởng
+  - tuyên bố
+  - hiệp định
+  - biểu quyết
+  - cử tri
+  - ứng cử
+  - nghị viện
+  - quan hệ
+  - song phương
+News_Crime_Disaster:
+  - tai nạn
+  - cháy
+  - nổ
+  - thiệt hại
+  - thiên tai
+  - bão
+  - lũ
+  - động đất
+  - sạt lở
+  - ngập
+  - nạn nhân
+  - tử vong
+  - thương vong
+  - cứu hộ
+  - cứu nạn
+  - công an
+  - khởi tố
+  - bắt giữ
+  - đối tượng
+  - nghi phạm
+  - vụ án
+  - cướp
+  - trộm
+  - giết
+  - ma túy
+  - lừa đảo
+  - hiện trường
+  - khẩn cấp
+  - sơ tán
+  - giao thông
+News_Current_Affairs:
+  - thời sự
+  - sự kiện
+  - thông tin
+  - cập nhật
+  - diễn biến
+  - phản ánh
+  - người dân
+  - cộng đồng
+  - địa phương
+  - dư luận
+  - quan tâm
+  - tình hình
+  - hôm nay
+  - mới nhất
+  - phát biểu
+  - thông báo
+  - họp báo
+  - kỷ niệm
+  - lễ hội
+  - khai mạc
+Sports:
+  - bóng đá
+  - cầu thủ
+  - huấn luyện
+  - đội tuyển
+  - câu lạc
+  - trận đấu
+  - giải đấu
+  - vô địch
+  - world cup
+  - sea games
+  - olympic
+  - tennis
+  - bàn thắng
+  - thủ môn
+  - hlv
+  - trọng tài
+  - vận động
+  - điền kinh
+  - bơi
+  - thể thao
+  - hiệp
+  - ghi bàn
+  - mùa giải
+  - huy chương
+  - bảng xếp
+Law_and_Government:
+  - pháp luật
+  - luật
+  - nghị định
+  - thông tư
+  - quy định
+  - văn bản
+  - ban hành
+  - thủ tục
+  - hành chính
+  - ủy ban
+  - quyết định
+  - chính sách
+  - thanh tra
+  - xử phạt
+  - vi phạm
+  - tòa án
+  - xét xử
+  - bản án
+  - điều khoản
+  - hiệu lực
+  - sửa đổi
+  - dự thảo
+  - cơ quan
+  - tố tụng
+  - công chức
+Business_and_Industrial:
+  - doanh nghiệp
+  - công ty
+  - sản xuất
+  - thị trường
+  - xuất khẩu
+  - nhập khẩu
+  - đầu tư
+  - nhà máy
+  - công nghiệp
+  - thương mại
+  - kinh doanh
+  - tập đoàn
+  - sản phẩm
+  - hàng hóa
+  - thương hiệu
+  - chuỗi cung
+  - khách hàng
+  - nông nghiệp
+  - lợi nhuận
+  - hợp tác
+Finance:
+  - ngân hàng
+  - lãi suất
+  - chứng khoán
+  - cổ phiếu
+  - tỷ giá
+  - tín dụng
+  - trái phiếu
+  - vốn
+  - tiền tệ
+  - lạm phát
+  - tăng trưởng
+  - gdp
+  - vay
+  - bảo hiểm
+  - thuế
+  - ngân sách
+  - nợ
+Health:
+  - sức khỏe
+  - bệnh viện
+  - bệnh nhân
+  - bác sĩ
+  - điều trị
+  - vắc xin
+  - dịch bệnh
+  - covid
+  - ung thư
+  - thuốc
+  - y tế
+  - triệu chứng
+  - phẫu thuật
+  - dinh dưỡng
+  - cấp cứu
+  - tiêm chủng
+People_and_Society:
+  - xã hội
+  - gia đình
+  - trẻ em
+  - phụ nữ
+  - cộng đồng
+  - văn hóa
+  - truyền thống
+  - thanh niên
+  - học sinh
+  - từ thiện
+  - hôn nhân
+  - dân tộc
+  - tôn giáo
+  - đời sống
+  - nhân dân
+Sensitive_Subjects:
+  - bạo lực
+  - tự tử
+  - xâm hại
+  - khủng bố
+  - chiến tranh
+  - vũ khí
+  - ma túy
+  - nghiện
+  - mại dâm
+  - cực đoan
+  - phân biệt
+  - quấy rối
+  - tố cáo
